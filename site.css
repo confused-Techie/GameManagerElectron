@@ -1,0 +1,170 @@
+* {
+  /*box-sizing: border-box;*/
+  background-color: #121212;
+  color: #fff;
+}
+
+body {
+  background-color: #121212;
+}
+
+h1 {
+  text-align: center;
+  color: #fff;
+  background-color: #121212;
+}
+
+.card {
+  color: white;
+  background-color: #212121;
+  display: flex;
+}
+
+.card-body {
+  background-color: #212121;
+  color: white;
+  text-align: center;
+}
+
+.card-title {
+  color: white;
+  background-color: #212121;
+}
+
+.card .card-text {
+  background-color: #212121;
+}
+
+.card .card-link {
+  background-color: inherit;
+}
+
+.card-footer {
+  /*width: 15rem;*/
+}
+
+.card-footer img {
+/*  width: 15rem;
+  align-content: center; */
+  display: block;
+  /*margin-left: auto;
+  margin-right: auto;
+  width: 15rem;*/
+  width: 100%;
+}
+
+.grid-container {
+  display: grid;
+  margin-left: 150px;
+  padding: 0px 10px;
+  grid-template-columns: repeat(2, 50%);
+  grid-template-rows: repeat(3, auto);
+  background-color: #121212;
+}
+
+.grid-container .grid-item {
+  margin-bottom: 0.75rem;
+  margin-left: 0.75rem;
+  display: inline-block;
+  /*width: 50%;
+  flex: 1;*/
+}
+
+.sidebar {
+  height: 100%;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #212121;
+  overflow-x: hidden;
+  padding-top: 20px;
+  padding-right: 2px;
+  max-width: 150px;
+  text-overflow: ellipsis;
+}
+
+.sidebar-item {
+  padding: 6px 8px 6px 16px;
+  text-decoration: none;
+  display: block;
+  background-color: inherit;
+}
+
+.sidebar-item hr {
+  background-color: white;
+  margin-top: 0px;
+  margin-bottom: 0px;
+
+}
+
+dl {
+  color: #fff;
+}
+
+dt {
+  background-color: #212121;
+}
+
+dd {
+  margin-top:0px;
+  margin-bottom:0px;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  background-color: #212121;
+  /*Tooltip*/
+
+}
+
+dd * {
+  background-color: inherit;
+}
+
+.topbar {
+  margin-left: 160px;
+}
+
+.topbar input[type=text] {
+  padding: 6px;
+  border: none;
+  margin-top: 8px;
+  margin-left: 0px;
+  background-color: #363636;
+  color: #fff;
+
+}
+
+.topbar img {
+
+  margin-top: -5px;
+
+}
+
+#searchIcon {
+  cursor: pointer;
+}
+
+.filterContainer {
+  float: right;
+  margin-top: 5px;
+  margin-right: 20px;
+  position: relative;
+}
+
+.filterContainer #gamesFilter {
+  width: 30px;
+}
+
+.filterContainer .filterOverlay {
+  float: right;
+  bottom: 0;
+  opacity: 1;
+  position: absolute;
+  margin-left: 15px;
+  margin-bottom: 5px;
+  background-color: transparent;
+}
+
+.dropdown {
+  position: relative;
+}

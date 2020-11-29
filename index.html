@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <title>Hello World!</title>
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+  <script src="./data/games.js"></script>
+  <link rel="stylesheet" href="./bootstrap/bootstrap.css">
+  <link rel="stylesheet" href="./bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="./bootstrap/bootstrap-grid.css">
+  <link rel="stylesheet" href="./bootstrap/bootstrap-grid.min.css">
+  <link rel="stylesheet" href="./site.css" />
+</head>
+<body onload="startFunction()">
+
+  <div class="topbar">
+    <input type="text" list="gamesSearch" id="searchTextField" placeholder="Search by Title...">
+    <img id="searchIcon" src="./data/images/search.svg" style="width:30px;" onclick="search()">
+    <datalist id="gamesSearch">
+
+    </datalist>
+    
+    <div class="filterContainer">
+    <img id="gamesFilter" src="./data/images/filter.svg" onclick="filterSearch()">
+      <div class="filterOverlay"><img src="./data/images/check-circle.svg" style="width: 15px;"></div>
+    </div>
+
+    <h1 id="topOfPage">Game Manager</h1>
+  </div>
+
+  <div class="sidebar" id='sidebar-container'>
+    <a href="#topOfPage"><img src="./data/images/arrow-up-circle.svg" style="width: 20px;float:right;margin-right:20px;background-color: #212121;"></a>
+    <div class="sidebar-item">
+      <dl>
+        <dt>Discord</dt><hr>
+        <dd>confused_techie</dd>
+        <dd>HeyThereImCloud</dd>
+      </dl>
+    </div>
+
+  </div>
+
+  <div class="grid-container" id="game-container">
+
+
+  </div>
+
+
+  <script>
+  const fs = require('fs');
+  const root = fs.readdirSync('/');
+  console.log(root);
+
+  obj = JSON.parse(gameList);
+  //document.write(obj.games[0].title);
+  new Notification("Tabby Updated", {
+    body: "The gamesList has been accessed"
+  });
+
+  //var insertText;
+  //var insertText = "<br/>";
+  //var insertText = "<div class='grid-container'><div class='grid-item'><div class='card-body'>";
+  //var i;
+  //for (i=0; i < obj.games.length; i++) {
+  //  insertText += "<div class='grid-container'><div class='grid-item'><div class='card'>";
+  //  insertText += obj.games[i].title;
+  //  insertText += "</div></div></div>";
+  //}
+  //console.log("obj.Length is: "+obj.games.length);
+  //insertText += "</div></div></div>";
+  //document.getElementById('letsDoIt').innerHTML += insertText;
+
+  //this works, and will work to add games to games.js
+  //console.log("Attemtping file create");
+  //fs.readFile('filelist.txt', 'utf-8', function(err, data){
+  //  if (err) throw err;
+    //modify file here
+  //  let newValue = data.replace("']}';", "Works!"+'\n'+"']}';");
+  //  fs.writeFile('filelistAsync.txt', newValue, 'utf-8', function(err) {
+  //    if (err) throw err;
+  //    console.log('FilelistAsync complete');
+  //  });
+  //});
+  </script>
+  <script src="./logic.js"></script>
+
+</body>
+</html>
