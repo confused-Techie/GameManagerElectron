@@ -1,6 +1,7 @@
 //var addLibrary = document.getElementById("addLibrary");
 const { dialog } = require('electron').remote
 const { net } = require('electron').remote
+const { BrowserWindow } = require('electron').remote
 const settings = require('electron-settings');
 
 //this is for handling all search features
@@ -18,11 +19,24 @@ function (event) {
 
 //This is the startup function, loading needed elements
 function startFunction() {
+  initSettings();
   sidebarVis();
   gameLibraryVis();
 
   //this is for loading the searchList
   searchList();
+}
+
+function initSettings() {
+  //this will be for creating first time settings that need to be there
+  if (!settings.hasSync('discordLink')) {
+    //discord linking hasn't been declared,
+    //so declare as false
+    settings.setSync('discordLink', {
+      status: false
+    });
+  }
+
 }
 
 function searchList() {
@@ -96,6 +110,39 @@ function sidebarVis() {
     document.getElementById('sidebar-container').innerHTML += libraryDataToInsert;
   }
 
+  if (settings.getSync('discordLink.status')) {
+    console.log("Discord Successfully Linked");
+  } else {
+    console.log("Discord has not been linked");
+    document.getElementById('sidebar-container').innerHTML += "<div onclick='linkDiscord()'>Link your Discord!</div>";
+  }
+
+}
+
+function linkDiscord() {
+  var authWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    show: false,
+    titleBarStyle: 'hidden',
+    'node=integration': false,
+  });
+  var discordURL = 'https://discord.com/api/oauth2/authorize?client_id=782700649439166504&redirect_uri=http%3A%2F%2Flocalhost&response_type=code&scope=relationships.read';
+  authWindow.loadURL(discordURL);
+  authWindow.show();
+  console.log(authWindow.webContents);
+
+  //to properly get the redirect and XMLpost, i may have to register
+  //a URI for Game Gaggle,
+  
+  //Reset the authWindow on close
+  authWindow.on(
+    'close',
+    function() {
+      authWindow = null;
+    },
+    false
+  );
 }
 
 function search() {
@@ -113,7 +160,7 @@ function search() {
 }
 
 function filterSearch() {
-  
+
 }
 function addLibrary() {
 

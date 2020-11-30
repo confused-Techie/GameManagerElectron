@@ -13,6 +13,7 @@
     "electron": "^11.0.2"
   },
   "dependencies": {
+    "discord-oauth2": "^2.6.0",
     "electron-settings": "^4.0.2"
   }
 }
