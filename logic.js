@@ -3,6 +3,8 @@ const { dialog } = require('electron').remote
 const { net } = require('electron').remote
 const { BrowserWindow } = require('electron').remote
 const settings = require('electron-settings');
+const fetch = require('node-fetch');
+const keytar = require('keytar');
 
 //this is for handling all search features
 var searchInputElement = document.getElementById("searchTextField");
@@ -112,6 +114,19 @@ function sidebarVis() {
 
   if (settings.getSync('discordLink.status')) {
     console.log("Discord Successfully Linked");
+    try {
+      var discordDataToInsert = "";
+      DiscordAPI("user_name").then(retreivedUser => {
+        console.log("Retreived Username for Sidebar: "+retreivedUser);
+        discordDataToInsert += "<div class='sidebar-item'><dl><dt>Discord</dt><hr>";
+        discordDataToInsert += "<dd>"+retreivedUser+"</dd>";
+        discordDataToInsert += "</dl></div>";
+        document.getElementById('sidebar-container').innerHTML += discordDataToInsert;
+      });
+    }
+    catch(ex) {
+      console.log("Unable to access saved Discord Data: "+ex);
+    }
   } else {
     console.log("Discord has not been linked");
     document.getElementById('sidebar-container').innerHTML += "<div onclick='linkDiscord()'>Link your Discord!</div>";
@@ -125,16 +140,82 @@ function linkDiscord() {
     height: 600,
     show: false,
     titleBarStyle: 'hidden',
-    'node=integration': false,
+    webPreferences: {
+      nodeIntegration: false,
+    },
   });
-  var discordURL = 'https://discord.com/api/oauth2/authorize?client_id=782700649439166504&redirect_uri=http%3A%2F%2Flocalhost&response_type=code&scope=relationships.read';
+  var discordURL = 'https://discord.com/api/oauth2/authorize?client_id=782700649439166504&redirect_uri=http%3A%2F%2Flocalhost&response_type=code&scope=identify';
+
   authWindow.loadURL(discordURL);
   authWindow.show();
-  console.log(authWindow.webContents);
 
   //to properly get the redirect and XMLpost, i may have to register
   //a URI for Game Gaggle,
-  
+
+  authWindow.webContents.on('will-navigate', function(event, url) {
+    console.log("Will-Navigate Returned URL...");
+    if (url.includes("code")) {
+      //includes the access code
+      authWindow.destroy();
+      var tempURLSplit = url.split("=");
+      var discordAccessCode = tempURLSplit[1];
+      //now time to make the Post request to exchange the Access Code wtih a User's Access Token
+      const discordExchangeData = {
+        client_id: SEC_Discord_client_id,
+        client_secret: SEC_Discord_client_secret,
+        grant_type: 'authorization_code',
+        redirect_uri: SEC_Discord_redirect_uri,
+        code: discordAccessCode,
+        scope: 'identify',
+      };
+
+      fetch('https://discord.com/api/oauth2/token', {
+        method: 'POST',
+        body: new URLSearchParams(discordExchangeData),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }).then(res => res.json())
+      .then(info => {
+        //mark the time the original call was made.
+        var created_time = new Date();
+        //console.log(info.token_type);
+        //console.log(info.access_token);
+        try {
+          keytar.setPassword("Gaming Gaggle", "DiscordAccessToken", info.access_token);
+          keytar.setPassword("Gaming Gaggle", "DiscordRefreshToken", info.refresh_token);
+          console.log("Successfully saved credentials to keychain.");
+          settings.setSync('discordLink', {
+            status: true
+          });
+          //finally after successfully saving credentials change discord to true for linking
+          //then save the non-secret discord link data.
+          //since the expires_in value is based on seconds from the time the request is made
+          //that also needs to be saved
+          settings.setSync('discordLinkData', {
+            expires_in: info.expires_in,
+            scope: info.scope,
+            token_type: info.token_type,
+            created_at: created_time.getTime(),
+          });
+          console.log("Successfully saved Non-Secret Discord Data");
+        }
+        catch(ex) {
+          console.log("There was an error saving to the keychain: "+ex);
+        }
+      });
+
+
+    } else if (url.includes("error")) {
+      //includes an error
+      authWindow.destroy();
+      console.log("Error with Discord Integration: "+url);
+    } else {
+      //generic error
+      console.log("Generic Error");
+    }
+  });
+
   //Reset the authWindow on close
   authWindow.on(
     'close',
@@ -143,6 +224,43 @@ function linkDiscord() {
     },
     false
   );
+}
+
+function DiscordAPI(option) {
+  //I will wrap this function around a promise to properly use it as a promise elsewhere
+  return new Promise(function(resolve, reject) {
+    var discordLinkedSettings = settings.getSync("discordLinkData");
+    const DiscordAccessToken = keytar.getPassword('Gaming Gaggle', 'DiscordAccessToken');
+    const DiscordRefreshToken = keytar.getPassword('Gaming Gaggle', 'DiscordRefreshToken');
+    //we need the current time to compare to
+    var expiry = new Date();
+
+    if ( (((discordLinkedSettings.created_at / 1000) + Number(discordLinkedSettings.expires_in)) - 86400)
+          > (expiry.getTime() / 1000) ) { //this will return false if expired, or a day from expiry, so every 6 days
+
+      if (option == "user_name") {
+        console.log("Fetching username of Discord Account...");
+        DiscordAccessToken.then((DiscordAccessTokenPromise) => {
+          fetch('https://discord.com/api/users/@me', {
+            headers: {
+              authorization: `${discordLinkedSettings.token_type} ${DiscordAccessTokenPromise}`,
+            },
+          })
+          .then(temp => temp.json())
+          .then(res => {
+            resolve(res.username);
+          });
+        });
+      }
+      else if (option == "user_icon") {
+
+      }
+    } else {
+      //refresh the token
+      console.log("Token has expired or is nearly expired");
+
+    }
+  });
 }
 
 function search() {
@@ -162,6 +280,7 @@ function search() {
 function filterSearch() {
 
 }
+
 function addLibrary() {
 
   result = dialog.showOpenDialogSync({

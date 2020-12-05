@@ -19,7 +19,7 @@
     <datalist id="gamesSearch">
 
     </datalist>
-    
+
     <div class="filterContainer">
     <img id="gamesFilter" src="./data/images/filter.svg" onclick="filterSearch()">
       <div class="filterOverlay"><img src="./data/images/check-circle.svg" style="width: 15px;"></div>
@@ -51,8 +51,7 @@
   const root = fs.readdirSync('/');
   console.log(root);
 
-  obj = JSON.parse(gameList);
-  //document.write(obj.games[0].title);
+
   new Notification("Tabby Updated", {
     body: "The gamesList has been accessed"
   });
@@ -82,7 +81,9 @@
   //  });
   //});
   </script>
+  <script src="./data/SECRETS.js"></script>
   <script src="./logic.js"></script>
+
 
 </body>
 </html>
