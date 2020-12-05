@@ -144,7 +144,7 @@ function linkDiscord() {
       nodeIntegration: false,
     },
   });
-  var discordURL = 'https://discord.com/api/oauth2/authorize?client_id=782700649439166504&redirect_uri=http%3A%2F%2Flocalhost&response_type=code&scope=identify';
+  var discordURL = 'https://discord.com/api/oauth2/authorize?client_id='+SEC_Discord_client_id+'&redirect_uri=http%3A%2F%2Flocalhost&response_type=code&scope=identify';
 
   authWindow.loadURL(discordURL);
   authWindow.show();
@@ -258,6 +258,53 @@ function DiscordAPI(option) {
     } else {
       //refresh the token
       console.log("Token has expired or is nearly expired");
+
+      DiscordRefreshToken.then((DiscordRefreshTokenPromise) => {
+        const discordRefreshData = {
+          client_id: SEC_Discord_client_id,
+          client_secret: SEC_Discord_client_secret,
+          grant_type: 'refresh_token',
+          refresh_token: DiscordRefreshTokenPromise,
+          redirect_uri: SEC_Discord_redirect_uri,
+          scope: 'identify',
+        };
+
+        fetch('https://discord.com/api/oauth2/token', {
+          method: 'POST',
+          body: new URLSearchParams(discordRefreshData),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }).then(res => res.json())
+        .then(info => {
+          var refresh_created_time = new Date();
+
+          //now save all related Settings
+          try {
+            keytar.setPassword("Gaming Gaggle", "DiscordAccessToken", info.access_token);
+            keytar.setPassword("Gaming Gaggle", "DiscordRefreshToken", info.refresh_token);
+            console.log("Successfully saved Refreshed credentials to keychain...");
+            settings.setSync('discordLink', {
+              status: true
+            });
+
+            //refer to initial Authorization code exchange for Access Token for documentation
+            settings.setSync('discordLinkData', {
+              expires_in: info.expires_in,
+              scope: info.scope,
+              token_type: info.token_type,
+              created_at: refresh_created_time.getTime(),
+            });
+            console.log("Successfully saved Non-Secret Refresh Discord Data...");
+            DiscordAPI(option).then(resolve);
+          }
+          catch(ex) {
+            console.log("There was an error saving to the keychain: "+ex);
+            reject("There was an error saving to keychain: "+ex);
+          }
+
+        });
+      });
 
     }
   });
