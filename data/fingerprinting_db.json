@@ -1,0 +1,44 @@
+{
+  "games": [
+    {
+      "name": "Rocket League",
+      "search_method": "epic_games",
+      "unique_id": "Sugar",
+      "launch": {
+        "method": "URI",
+        "cmd": "com.epicgames.launcher://apps/Sugar?action=launch"
+      },
+      "meta_data": {
+        "img": "https://rocketleague.media.zestyio.com/rl_cross-play_asset_rl_1920.309bf22bd29c2e411e9dd8eb07575bb1.jpg",
+        "description": "Rocket League is a high-powered hybrid of arcade-style soccer and vehicular mayhem with easy-to-understand controls and fluid, physics-driven competition."
+      }
+    },
+    {
+      "name": "Torch Light 2",
+      "search_method": "epic_games",
+      "unique_id": "8e425d507bd6473dbb927f0fea8ef4f6",
+      "launch": {
+        "method": "URI",
+        "cmd": "com.epicgames.launcher://apps/8e425d507bd6473dbb927f0fea8ef4f6?action=launch"
+      },
+      "meta_data": {
+        "img": "https://steamcdn-a.akamaihd.net/steam/apps/200710/header.jpg?t=1597342077",
+        "description": "The adventure continues in Torchlight II! An Action RPG filled with epic battles, bountiful treasure, and a fully randomized world. Bring your friends along for the journey with online and LAN multiplayer."
+      }
+    },
+    {
+      "name": "Rogue Company",
+      "search_method": "epic_games",
+      "unique_id": "Pewee",
+      "launch": {
+        "method": "URI",
+        "cmd": "com.epicgames.launcher://apps/Pewee?action=launch"
+      },
+      "meta_data": {
+        "img": "https://www.nintendo.com/content/dam/noa/en_US/games/switch/r/rogue-company-switch/rogue-company-switch-hero.jpg",
+        "description": "The world needs saving and only the best of the best can do it. Suit up as one of the elite agents of Rogue Company and go to war in a variety of different game modes. Gear up and go Rogue! Download and play FREE now!"
+      }
+    }
+
+  ]
+}

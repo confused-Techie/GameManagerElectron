@@ -5,6 +5,7 @@ const { BrowserWindow } = require('electron').remote
 const settings = require('electron-settings');
 const fetch = require('node-fetch');
 const keytar = require('keytar');
+const fs = require('fs');
 
 //this is for handling all search features
 var searchInputElement = document.getElementById("searchTextField");
@@ -55,7 +56,8 @@ function searchList() {
   document.getElementById('gamesSearch').innerHTML += searchListData;
 }
 
-function gameLibraryVis() {
+function gameLibraryVis() { //if called from a finsihed API, it will add all data onto the page twice.
+                            //at the start it should clean out all previously saved stuff
   //this is made simply to look at the saved apps and create the main HTML page for it.
 
   //first create an array of the ID's for Steam,
@@ -83,6 +85,32 @@ function gameLibraryVis() {
     steamDataToInsert += "</div></div></div></div>";
   }
   document.getElementById('game-container').innerHTML += steamDataToInsert;
+
+  //now to check for Epic Games content
+  if (settings.hasSync('EpicGamesAppId')) {
+    var displayEpicGameIds;
+    try {
+      displayEpicGameIds = (settings.getSync('EpicGamesAppId.list')).split(",");
+      console.log("Parsed App ID's for Display: "+displayEpicGameIds.length);
+    } catch(err) {
+      console.log("Unable to access Saved Ids: "+err);
+    }
+    var epicDataToInsert = "";
+    for (let i =0; i < displayEpicGameIds.length; i++) {
+      var applicationIdentity = displayEpicGameIds[i];
+      var insertName = settings.getSync(applicationIdentity+'.details.name');
+      var insertDescription = settings.getSync(applicationIdentity+'.details.description');
+      var insertImg = settings.getSync(applicationIdentity+'.details.img');
+      var insertLaunch = settings.getSync(applicationIdentity+'.details.launch');
+
+      epicDataToInsert += "<div class='grid-item' id='"+insertName+"'><div class='card'><div class='card-body'><div class='card-title'>";
+      epicDataToInsert += "<a href='"+insertLaunch+"'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>"+insertName;
+      epicDataToInsert += "</div><p class='card-text'>"+insertDescription+"</p>";
+      epicDataToInsert += "<div class='card-footer text-muted'><img src='"+insertImg+"'/>";
+      epicDataToInsert += "</div></div></div></div>";
+    }
+    document.getElementById('game-container').innerHTML += epicDataToInsert;
+  }
 
 }
 
@@ -118,10 +146,13 @@ function sidebarVis() {
       var discordDataToInsert = "";
       DiscordAPI("user_name").then(retreivedUser => {
         console.log("Retreived Username for Sidebar: "+retreivedUser);
-        discordDataToInsert += "<div class='sidebar-item'><dl><dt>Discord</dt><hr>";
-        discordDataToInsert += "<dd>"+retreivedUser+"</dd>";
-        discordDataToInsert += "</dl></div>";
-        document.getElementById('sidebar-container').innerHTML += discordDataToInsert;
+        DiscordAPI("user_icon").then(discordIcon => {
+          discordDataToInsert += "<div class='sidebar-item'><dl><dt>Discord</dt><hr>";
+          discordDataToInsert += `<div class="imgCenter"><img src='${discordIcon}' alt="Discord Profile Icon" style='height:30px;width:30px;float:left;'></div>`;
+          discordDataToInsert += "<dd>"+retreivedUser+"</dd>";
+          discordDataToInsert += "</dl></div>";
+          document.getElementById('sidebar-container').innerHTML += discordDataToInsert;
+        });
       });
     }
     catch(ex) {
@@ -253,7 +284,44 @@ function DiscordAPI(option) {
         });
       }
       else if (option == "user_icon") {
-
+        //before attemtping to get the avatar we first need to check if it exists.
+        var discordAvatarLoc = "./data/cache/discordAvatar.png";
+        if (!fs.existsSync(discordAvatarLoc)) {
+          //to get the avatar we first need to get the standard user details
+          console.log("Fetching User Details to assist with User Avatar Fetch...");
+          try {
+            DiscordAccessToken.then((DiscordAccessTokenPromise) => {
+              try {
+                fetch('https://discord.com/api/users/@me', {
+                  headers: {
+                    authorization: `${discordLinkedSettings.token_type} ${DiscordAccessTokenPromise}`,
+                  },
+                })
+                .then(temp => temp.json())
+                .then(res => {
+                  //now with user data time to request specific avatar data
+                  try {
+                    fetch(`https://cdn.discordapp.com/avatars/${res.id}/${res.avatar}.png`, {
+                      headers: {
+                        authorization: `${discordLinkedSettings.token_type} ${DiscordAccessTokenPromise}`,
+                        'Content-Type': 'image/png',
+                      },
+                    }).then(resIcon => {
+                      const fileStream = fs.createWriteStream("./data/cache/discordAvatar.png");
+                      resIcon.body.pipe(fileStream);
+                      resIcon.body.on("error", reject);
+                      fileStream.on("finish", () => { resolve("./data/cache/discordAvatar.png"); });
+                    });
+                  } catch(ex) { console.log("Unable to grab Discord Avatar: "+ex); }
+                });
+              } catch(ex) { console.log("Unable to access Network Request for Discord user Data: "+ex); }
+            });
+          } catch(ex) { console.log("Unable to access Keychain Data: "+ex); }
+        }
+        else {  //discordAvatar file does exists
+          console.log("Discord Avatar is already cached...");
+          resolve(discordAvatarLoc);
+        }
       }
     } else {
       //refresh the token
@@ -395,6 +463,47 @@ function addLibrary() {
       //location.reload(); //Calling here interrupts the other functions
 
     }
+    else if (providerDetected == "Epic_Games") {
+      if (settings.hasSync('SavedLibraries')) {
+        console.log("Saved Library Settings do exist. Adding...");
+        var previousSavedLibraries = settings.getSync('SavedLibraries');
+        settings.setSync('SavedLibraries', {
+          fullList: previousSavedLibraries.fullList+","+result[0],
+        });
+        collectEpicIds(result[0]).then(epicAppIDCollection => {
+          settings.setSync(result[0], {
+            Ids: epicAppIDCollection+""
+          });
+          epic_gamesApi(epicAppIDCollection).then(epic_gamesApi_Res => {
+            //this is where a refresh should happen, or really once the api requests are all done
+            if (epic_gamesApi_Res == 'true') {
+              gameLibraryVis();
+            }
+          });
+        });
+      } else {
+        //no saved library settings
+        console.log("Saved Library Settings does not exists. Creating...");
+        settings.setSync('SavedLibraries', {
+          fullList: result[0],
+        });
+        collectEpicIds(result[0]).then(epicAppIDCollection => {
+          console.log("IDs returned: "+epicAppIdCollection);
+          settings.setSync(result[0], {
+            Ids: epicAppIDCollection+""
+          });
+
+          epic_gamesApi(epicAppIdCollection).then(epic_gamesApi_Res => {
+            //this is where a refresh should happen, or really once the api requests are all done.
+            if (epic_gamesApi_Res == 'true') {
+              //since I know all games have been saved fully and this will return while all async is done, I can call library vis
+              gameLibraryVis();
+            }
+          });
+        });
+      }
+
+    }
     else if (providerDetected == "None") {
       console.log("No Supported Provider Found");
     }
@@ -417,6 +526,18 @@ function detectProvider(directory) {
       //and if it matches steam to return that
       return "Steam";
       break;
+    }
+    else {
+      //executes if the root directory doesn't match any known providers.
+      const twoRoot = fs.readdirSync(directory+"/"+root[i]);
+      console.log("Detected Folders: "+twoRoot);
+      for (let y=0;y<twoRoot.length;y++) {
+        if (twoRoot[y] == ".egstore") {
+          console.log("Epic games Game Folder Detected");
+          return "Epic_Games";
+          break;
+        }
+      }
     }
   }
 
@@ -448,6 +569,59 @@ function collectSteamIds(directory) {
   console.log("tempAppId within collectSteamIds: " + tempAppId);
   return tempAppId;
   //this should return an array of App Ids
+}
+
+function collectEpicIds(directory) {
+  return new Promise(function(resolve, reject) {
+    const root = fs.readdirSync(directory);
+    var epicParentDir = new Array();
+    var epicTempId = new Array();
+    var amountOfGames = 100;  //this will be used to ensure all games are added before resolve()
+    //setting amount of games so high, ensures it doesn't resolve right away with a value of 0
+    var gameSavedCheck = new Array(); //again used to ensure all games are added before resolve()
+
+    for (let x=0; x<root.length;x++) {
+      epicParentDir.push(directory+"/"+root[x]);
+      console.log(epicParentDir[x]);
+      amountOfGames = epicParentDir.length; //this will set the amount of games to how many have been added,
+                                            //which once done will be the total amount of games
+    }
+    for (let y=0; y<epicParentDir.length; y++) {
+      const tempDirScan = fs.readdirSync(epicParentDir[y]);
+      for (let u=0; u<tempDirScan.length;u++) {
+        if (tempDirScan[u] == ".egstore") {
+          const egstoreScan = fs.readdirSync(epicParentDir[y]+"/"+tempDirScan[u]);
+          for (let q=0;q<egstoreScan.length;q++) {
+            if (egstoreScan[q].includes("mancpn")) {
+              //this would mean one of the mancpn files have been found.
+              console.log("Mancpn file found: "+egstoreScan[q]);
+              fs.readFile(epicParentDir[y]+"/"+tempDirScan[u]+"/"+egstoreScan[q], 'utf8', function (err, data) {
+                if (err) {
+                  console.log("Error occured reading file: "+err);
+                  reject();
+                }
+                let res = JSON.parse(data);
+                console.log("Unique Id Found: "+res.AppName);
+                epicTempId.push(res.AppName);
+                gameSavedCheck.push('true');  //shows a completed save of game
+                console.log("Game Saved Check: "+gameSavedCheck.length+" :: Amount OF Games: "+amountOfGames);
+                if (amountOfGames == gameSavedCheck.length) {
+                  console.log("Resolving with: "+epicTempId);
+                  resolve(epicTempId);
+                }
+              });
+            }
+          }
+        }
+      }
+    }
+    if (amountOfGames == gameSavedCheck.length) {
+      console.log("Resolving with: "+epicTempId);
+      resolve(epicTempId);
+      //for some unknown reason this is never returned after adding if, so return added in for with same checks.
+    }
+
+  });
 }
 
 function steamApi(applicationid) {
@@ -491,4 +665,106 @@ function steamApi(applicationid) {
 
   //location.reload();
   //return true;
+}
+
+function epic_gamesApi(applicationidArray) {
+  return new Promise(function(resolve, reject) {
+    //add method to check if all games have been saved.
+    var gameSavedCheck = new Array();
+    var amountOfGames = applicationidArray.length;
+    //first we need to get the fingerprinting database
+    fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
+      if (err) {
+        console.log("Error occured reading database: "+err);
+        reject();
+      }
+      let FingerPrintDB = JSON.parse(data);
+      for (let i=0; i < applicationidArray.length; i++) {
+        for (y in FingerPrintDB.games) {
+          if (applicationidArray[i] == FingerPrintDB.games[y].unique_id) {
+            console.log("Attempting Save: "+FingerPrintDB.games[y].name);
+            var tempLaunchLink = "";
+            if (FingerPrintDB.games[y].launch.method != "URI") {
+              //if command line or something else that can be here
+            } else {
+              tempLaunchLink = FingerPrintDB.games[y].launch.cmd;
+            }
+            try {
+              settings.setSync(applicationidArray[i], {
+                details: {
+                  name: FingerPrintDB.games[y].name,
+                  appid: applicationidArray[i],
+                  provider: "Epic Games",
+                  description: FingerPrintDB.games[y].meta_data.description,
+                  img: FingerPrintDB.games[y].meta_data.img,
+                  launch: tempLaunchLink
+                }
+              });
+              //after successful save add to savedcheck Array
+              gameSavedCheck.push('true');
+              if (amountOfGames == gameSavedCheck.length) {
+                if (settings.hasSync('EpicGamesAppId')) {
+                  console.log("EpicGamesAppId already exists, adding...");
+                  var previousEpicGamesAppId = settings.getSync('EpicGamesAppId.list');
+                  settings.setSync('EpicGamesAppId', {
+                    list: previousEpicGamesAppId + "," + applicationidArray
+                  });
+                } else {
+                  console.log("EpicGamesAppId doesn't exists, creating...");
+                  settings.setSync('EpicGamesAppId', {
+                    list: applicationidArray+""
+                  });
+                }
+                console.log("Done Saving data for all games.");
+                resolve('true');
+              }
+            }
+            catch(err) {
+              console.log("Couldn't save settings: "+err);
+              reject();
+            }
+          } else {
+            //this would happen if the game found isn't supported yet by the fingerprint database.
+            //so simply this will be printed, and taken from the total games to be saved
+            //amountOfGames = amountOfGames-1;
+            console.log("Unsupported Game found: "+applicationidArray[i]);
+            console.log("Amount of Games to Add now: "+amountOfGames);
+            console.log("Saved so far: "+gameSavedCheck.length);
+
+            //it seems if the supported games are out of order, could lead to an instance where this never resolves,
+            //never saving the list so that it can be properly viewed, and confirmed that all games are saved.
+
+            //TODO:
+            //because this grabs on found title and checks it against a match to every title in the db
+            //when one of the db titles ins't the same as scanned it removes 1 from amountOfGames, even though
+            //this just means that single instance of the db didn't match, not that none match. Removing the subtraction for now
+          }
+        }
+      }
+    });
+  });
+}
+
+function removeEpicGamesData(areYouSure) {
+  //this is used to permentantly delete all Epic Games data.
+  if (areYouSure == "true") {
+    try {
+      var allLibraries = settings.getSync('SavedLibraries.fullList');
+      for (let i = 0; i < allLibraries.length; i++) {
+        if (allLibraries[i].contains("Epic") || allLibraries[i].contains("epic")) {
+          //now with a library we can use that to find its corrosponding Ids
+          try {
+
+          } catch(err) {
+
+          }
+          console.log("Permentantly Deleting Game Library Entry: "+allLibraries[i]);
+          settings.unsetSync(allLibraries[i]);
+
+        }
+      }
+    } catch(err) {
+      console.log("Unable to Find Library File. You may need to delete data manually. Error: "+err);
+    }
+  }
 }

@@ -1,0 +1,3 @@
+# the cache folder is needed for Gaming Gaggle to work properly
+# but due to the fact this is data specific to my system the cached files are excluded
+# and with git not allowing empty folders, this is needed to upload properly

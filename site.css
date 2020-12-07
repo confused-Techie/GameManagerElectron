@@ -112,13 +112,18 @@ dd {
   font-size: 15px;
   text-overflow: ellipsis;
   background-color: #212121;
+  display: flex;
+  flex-direction: row;
   /*Tooltip*/
+
 
 }
 
 dd * {
   background-color: inherit;
 }
+
+
 
 .topbar {
   margin-left: 160px;
