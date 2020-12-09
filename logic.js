@@ -44,22 +44,39 @@ function initSettings() {
 
 function searchList() {
   var searchListData = "";
-  if (settings.hasSync('SteamAppId')) {
-    //executed if steam apps have been Saved
-    var tempSteamAppIDList = settings.getSync('SteamAppId.list').split(",");
-    var u;
-    for (u=0;u<tempSteamAppIDList.length;u++) {
-      var tempAddToList = settings.getSync(tempSteamAppIDList[u]+'.details.name');
-      searchListData += "<option value='"+tempAddToList+"'>";
+  try {
+    if (settings.hasSync('SteamAppId')) {
+      console.log("Adding Steam Games to Search List...");
+      //executed if steam apps have been Saved
+      var tempSteamAppIDList = settings.getSync('SteamAppId.list').split(",");
+      var u;
+      for (u=0;u<tempSteamAppIDList.length;u++) {
+        var tempAddToList = settings.getSync(tempSteamAppIDList[u]+'.details.name');
+        searchListData += "<option value='"+tempAddToList+"'>";
+      }
     }
+  } catch(ex) {
+    console.log("Attempted to Add Steam Games to Search List: "+ex);
+  }
+  try {
+    if (settings.hasSync('EpicGamesAppId')) {
+      console.log("Adding Epic Games to Search List...");
+      var tempEpicAppIDList = settings.getSync('EpicGamesAppId.list').split(",");
+      for (let u=0; u<tempEpicAppIDList.length; u++) {
+        var tempAddToList = settings.getSync(tempEpicAppIDList[u]+'.details.name');
+        searchListData += "<option value='"+tempAddToList+"'>'";
+        console.log("Added "+tempAddToList+" to Epic Games Search List");
+      }
+    }
+  } catch(ex) {
+    console.log("Attempted to Add Epic Games to Search List: "+ex);
   }
   document.getElementById('gamesSearch').innerHTML += searchListData;
 }
 
-function gameLibraryVis() { //if called from a finsihed API, it will add all data onto the page twice.
-                            //at the start it should clean out all previously saved stuff
+function gameLibraryVis() {
   //this is made simply to look at the saved apps and create the main HTML page for it.
-
+  document.getElementById('game-container').innerHTML = ""; //fixes an issue where calling from a finished API may display data twice
   //first create an array of the ID's for Steam,
   var displaySteamIds;
   try {
