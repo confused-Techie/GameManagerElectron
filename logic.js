@@ -142,8 +142,8 @@ function sidebarVis() {
     for (i = 0; i < displaySavedLibrary.length; i++) {
       var insertLibrary = displaySavedLibrary[i];
       libraryDataToInsert += "<dd>"+insertLibrary+"</dd>";
-    }
-    libraryDataToInsert += "<dd><a href='#' onclick='addLibrary()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
+    }                                                //normally addLibrary()
+    libraryDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
     libraryDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
     libraryDataToInsert += "</dl></div>";
     document.getElementById('sidebar-container').innerHTML += libraryDataToInsert;
@@ -413,6 +413,296 @@ function filterSearch() {
 
 }
 
+function GameInspectorV2() {
+  //Generation 2 of the Game Scanning logic.
+  //In hopes of reducing complexity and resource usage.
+
+  folderResult = dialog.showOpenDialogSync({
+    title: "Add Game Library",
+    buttonLabel: "Add Library",
+    properties: ['openDirectory', 'dontAddToRecent']
+  });
+  if (folderResult === undefined) {
+    console.log("No Directory Selected");
+    return;
+  } else {
+    console.log("Result of Library Pick: "+folderResult[0]);
+    try {
+      DirInspectorV2(folderResult[0]).then(DirIResult => {
+        if (DirIResult == "true") {
+          console.log("Successfully scanned Folder");
+          //save directory
+        }
+      }).catch(ErrorCatch => {
+        console.log("Error Occured: "+ErrorCatch);
+      });
+    }
+    catch(ex) {
+      console.log("Unable to call DirScan: " + ex);
+    }
+  }
+}
+
+function DirInspectorV2(startDir) {
+  console.log("DirInspectorV2 access");
+  return new Promise(function(resolve, reject) {
+    const Root = fs.readdirSync(startDir);
+
+    //this will handle the 5 hops down
+    for (let i = 0; i < Root.length; i++) {
+      //this will loop through every folder in the selected root
+      var root_check = startDir+"/"+Root[i];
+      //this defines our working directory,
+      MatchCheckV2(Root[i], root_check);
+      //calls MatchCheck with working directory, and the folder name
+      var root_lstat_check;
+      //this will help avoid the exception thrown by lstatSync
+      try {
+        root_lstat_check = fs.lstatSync(root_check).isDirectory();
+      } catch(ex) {
+        root_lstat_check = false;
+      }
+      //this will check for having access to the file
+      var root_access_check=true;
+      //try {
+      //  if (fs.accessSync(root_check, fs.constants.R_OK) == "undefined") {
+      //    root_access_check = true;
+      //  }
+      //} catch(ex) {
+      //  console.log("Access Denied: "+root_check+": Error: "+ex);
+      //}
+      if (fs.existsSync(root_check) && root_lstat_check && root_access_check) {
+
+        const secondary_R = fs.readdirSync(root_check);
+        for (let u = 0; u < secondary_R.length; u++) {
+          var secondary_check = root_check+"/"+secondary_R[u];
+          MatchCheckV2(secondary_R[u], secondary_check);
+          var secondary_lstat_check;
+          try {
+            secondary_lstat_check = fs.lstatSync(secondary_check).isDirectory();
+          } catch(ex) {
+            secondary_lstat_check = false;
+          }
+          if (fs.existsSync(secondary_check) && secondary_lstat_check) {
+
+            const tertiary_R = fs.readdirSync(secondary_check);
+            for (let y = 0; y < tertiary_R.length; y++) {
+              var tertiary_check = secondary_check+"/"+tertiary_R[y];
+              MatchCheckV2(tertiary_R[y], tertiary_check);
+              var tertiary_lstat_check;
+              try {
+                tertiary_lstat_check = fs.lstatSync(tertiary_check).isDirectory();
+              } catch(ex) {
+                tertiary_lstat_check = false;
+              }
+              if (fs.existsSync(tertiary_check) && tertiary_lstat_check) {
+
+                const quaternary_R = fs.readdirSync(tertiary_check);
+                for (let t = 0; t < quaternary_R.length; t++) {
+                  var quaternary_check = tertiary_check+"/"+quaternary_R[t];
+                  MatchCheckV2(quaternary_R[t], quaternary_check);
+                  var quaternary_lstat_check;
+                  try {
+                    quaternary_lstat_check = fs.lstatSync(quaternary_check).isDirectory();
+                  } catch(ex) {
+                    quaternary_lstat_check = false;
+                  }
+                  if (fs.existsSync(quaternary_check) && quaternary_lstat_check) {
+
+                    const quinary_R = fs.readdirSync(quaternary_check);
+                    for (let r = 0; r < quinary_R.length; r++) {
+                      var quinary_check = quaternary_check+"/"+quinary_R[r];
+                      MatchCheckV2(quinary_R[r], quinary_check);
+                      //at this point this is 5 hops down, and should be enough of a check.
+                      resolve("true");
+                    }
+                  } //else { console.log("DirInspectorV2 Quaternary failure"); }
+                }
+              } //else { console.log("DirInspectorV2 Tertiary Failure"); }
+            }
+          } //else { console.log("DirInspectorV2 Secondary Failure"); }
+        }
+      } //else { console.log("DirInspectorV2 Root Failure");}
+    }
+  });
+}
+
+function MatchCheckV2(fileToScan, workingDir) {
+  //sanity checks
+  //console.log("Provided File: "+fileToScan);
+  //console.log("Provided Directory: "+workingDir);
+
+  //now to check the passed files and directories for game data
+
+  //in all of these there need to be checks to ensure no duplicates are saved
+  //Steam Check
+  if (fileToScan.includes("acf") && workingDir.includes("steamapps")) {
+    var foundSteamId = fileToScan.replace(/\D/g, '');
+    console.log("Steam Game: "+foundSteamId);
+    steamApiV2(foundSteamId, workingDir)
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log(err);
+    });
+  }
+
+  //epic check
+  else if (fileToScan.includes("mancpn") && workingDir.includes(".egstore")) {
+    fs.readFile(workingDir, 'utf8', function (err, data) {
+      if (err) {
+        console.log("Error occured reading file: "+err);
+      }
+      let res = JSON.parse(data);
+      console.log("Epic Game: "+res.AppName);
+      epicApiV2(res.AppName, workingDir)
+      .then(res => {
+        console.log(res);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+    });
+  }
+
+  //Minecraft Java Check
+  else if (fileToScan == "MinecraftLauncher.exe" && workingDir.includes("Minecraft Launcher")) {
+    console.log("Minecraft Java Edition Found");
+    //tesst by scanning Program Files (x86)
+  }
+
+  //CoD Black Ops Cold War Check
+  else if (fileToScan.includes("BlackOpsColdWar") && workingDir.includes("Call of Duty Black Ops Cold War")) {
+    console.log("Call of Duty Black Ops Cold War Found");
+  }
+
+  //CoD Modern Warfare Check
+  else if (fileToScan.includes("ModernWarfare") && workingDir.includes("Call of Duty Modern Warfare")) {
+    console.log("Call of Duty Modern Warfare Found");
+  }
+
+  //Valorant Check
+  else if (fileToScan.includes("VALORANT.exe") && workingDir.includes("VALORANT")) {
+    console.log("Valorant Found");
+  }
+
+  //League of Legends Check
+  else if (fileToScan.includes("LeagueClient") && workingDir.includes("League of Legends")) {
+    console.log("League of Legends Found");
+  }
+
+  //Final Fantasy XIV - A Realm Reborn Check
+  else if (fileToScan.includes("ffxiv.exe") && workingDir.includes("SquareEnix")) {
+    console.log("Final Fantasy XIV - A Realm Reborn Found");
+  }
+
+}
+
+function steamApiV2(applicationID, loc) {
+  console.log("SteamApiV2 Accessed");
+  return new Promise(function(resolve, reject) {
+    //firstly to make the API request for game data
+    try {
+      fetch('http://store.steampowered.com/api/appdetails/?appids='+applicationID)
+      .then(temp => temp.json())
+      .then(res => {
+        if (res[applicationID].success) {
+          try {
+            if (!settings.hasSync(applicationID)) {
+              //put the rest of the logic for sving here
+              resolve("Successfully Saved SteamAPI Settings: "+res[applicationID].data.name);
+            } else {
+              console.log("This SteamID is already saved: "+res[applicationID].data.name);
+              reject("Already Saved This SteamID: "+res[applicationID].data.name);
+            }
+            resolve("Successfully Saved SteamAPi Settings: "+res[applicationID].data.name);
+          } catch(err) {
+            console.log("Error: Saving Settings: "+err);
+            reject("Error: Saving Settings: "+err);
+          }
+        } else {
+          console.log("Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
+          reject("Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
+        }
+      });
+    } catch(err) {
+      console.log("Steam API Error: "+err);
+      reject("Steam API Error: "+err);
+    }
+  });
+}
+
+function epicApiV2(applicationID, loc) {
+  return new Promise(function(resolve, reject) {
+    //first to retreive the fingerprintDB
+    try {
+      fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
+        if (err) {
+          reject("Error occured reading Database: "+err);
+        }
+        let FingerPrintDB = JSON.parse(data);
+        //loop through every game within the db
+        for (y in FingerPrintDB.games) {
+          if (FingerPrintDB.games[y].search_method == "epic_games") {
+            //take only ones matching epic
+            if (FingerPrintDB.games[y].unique_id == applicationID) {
+              try {
+                if (!settings.hasSync(applicationID)) {
+                  //confirm it hasn't already been saved
+                  //rest of save logic here
+                  resolve("Successfully Saved EpicApi Settings for: "+applicationID);
+                } else {
+                  reject("Already Saved This Epic ID: "+applicationID);
+                }
+              } catch(ex) {
+                reject("Error: Saving Settings: "+ex);
+              }
+            }
+          }
+        }
+      })
+    } catch(err) {
+      reject("Error occured reading Fingerprint Database: "+err);
+    }
+  });
+}
+
+function otherApiV1(applicationID, loc) {
+  //while there was never an OtherV1, I'm naming this V2
+  //to keep in line with the new methodalogy
+  return new Promise(function(resolve, reject) {
+    try {
+      fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
+        if (err) {
+          reject("Error occured reading Database: "+err);
+        }
+        let FingerPrintDB = JSON.parse(data);
+        for (y in FingerPrintDB.games) {
+          if (FingerPrintDB.games[y].search_method != "epic_games") {
+            //since I want search method to contain the provider, they will differ during other calls
+            if (FingerPrintDB.games[y].unique_id == applicationID) {
+              try {
+                if (!settings.hasSync(applicationID)) {
+                  //confirm it hasn't already been saved
+                  //rest of save logic here
+                  resolve("Successfully Saved This Game ID: "+applicationID + "/"+FingerPrintDB.games[y].name);
+                } else {
+                  reject("Already Saved This Game ID: "+applicationID +"/"+FingerPrintDB.games[y].name);
+                }
+              } catch(err) {
+                reject("Error Checking Saved Status: "+err);
+              }
+            }
+          }
+        }
+      });
+    } catch(err) {
+      reject("Error: During Reading Database: "+err);
+    }
+  });
+}
+
 function addLibrary() {
 
   result = dialog.showOpenDialogSync({
@@ -553,6 +843,9 @@ function detectProvider(directory) {
           console.log("Epic games Game Folder Detected");
           return "Epic_Games";
           break;
+        }
+        else if (twoRoot[y] == "Minecraft Launcher") {  //default name for the minecraft java folder
+
         }
       }
     }
