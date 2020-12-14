@@ -1,6 +1,45 @@
 {
   "games": [
     {
+      "name": "Valorant",
+      "search_method": "riot_games",
+      "unique_id": "valorant_riot",
+      "launch": {
+        "method": "command_line:original",
+        "cmd": "--launch-product=valorant"
+      },
+      "meta_data": {
+        "img": "https://images.contentstack.io/v3/assets/bltb6530b271fddd0b1/blta73c882a72c618e3/5ed4150d08ac190a51c6ab88/VALORANT_Logo_V_Lightbox.jpg",
+        "description": "Valorant is a free-to-play multiplayer tactical first-person hero shooter developed and published by Riot Games, for Microsoft Windows."
+      }
+    },
+    {
+      "name": "Call of Duty: Black Ops Cold War",
+      "search_method": "battle.net",
+      "unique_id": "CoD_bocw",
+      "launch": {
+        "method": "command_line:battle",
+        "cmd": "--game=zeus"
+      },
+      "meta_data": {
+        "img": "https://www.callofduty.com/content/dam/atvi/callofduty/cod-touchui/zeus/home/hero/hero-key-art-zeus-mobile.jpg",
+        "description": "Welcome to the brink. Welcome to Call of Duty®: Black Ops Cold War - the direct sequel to the original and fan-favourite Call of Duty®: Black Ops."
+      }
+    },
+    {
+      "name": "Call of Duty: Modern Warfare",
+      "search_method": "battle.net",
+      "unique_id": "CoD_mw",
+      "launch": {
+        "method": "command_line:battle",
+        "cmd": ""
+      },
+      "meta_data": {
+        "img": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e9/CallofDutyModernWarfare%282019%29.jpg/220px-CallofDutyModernWarfare%282019%29.jpg",
+        "description": "The stakes have never been higher as players take on the role of lethal Tier One operators in a heart-racing saga that will affect the global balance of power. Developed by the studio that started it all, Infinity Ward delivers an epic reimagining of the iconic Modern Warfare series from the ground up."
+      }
+    },
+    {
       "name": "Rocket League",
       "search_method": "epic_games",
       "unique_id": "Sugar",

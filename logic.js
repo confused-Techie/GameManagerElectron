@@ -6,6 +6,7 @@ const settings = require('electron-settings');
 const fetch = require('node-fetch');
 const keytar = require('keytar');
 const fs = require('fs');
+const { spawn } = require('child_process');
 
 //this is for handling all search features
 var searchInputElement = document.getElementById("searchTextField");
@@ -23,11 +24,13 @@ function (event) {
 //This is the startup function, loading needed elements
 function startFunction() {
   initSettings();
-  sidebarVis();
+  //sidebarVis();
   gameLibraryVis();
 
   //this is for loading the searchList
-  searchList();
+  //searchList();
+  //searchList will be disabled while moving everything to V2 structure
+  //as well as sidebarVis will be disbaled until V2
 }
 
 function initSettings() {
@@ -77,57 +80,109 @@ function searchList() {
 function gameLibraryVis() {
   //this is made simply to look at the saved apps and create the main HTML page for it.
   document.getElementById('game-container').innerHTML = ""; //fixes an issue where calling from a finished API may display data twice
-  //first create an array of the ID's for Steam,
-  var displaySteamIds;
-  try {
-    displaySteamIds = (settings.getSync('SteamAppId.list')).split(",");
-    console.log("Parsed App ID's for Display: "+displaySteamIds.length);
-  } catch {
-    console.log("No Steam ID's Saved...");
+
+  //this will be V2 of displaying the games with the new settings framework
+  var displayData = "";
+  if (settings.hasSync('game_list')) {
+    //ensure the game list exists
+    try {
+      gameIDs = (settings.getSync('game_list.list')).split(",");
+      for (let i = 0; i < gameIDs.length; i++) {
+        try {
+          game_item = settings.getSync(gameIDs[i]);
+          var insertName = game_item.details.name;
+          var insertIdentity = game_item.details.appid;
+          var insertDescription = game_item.details.description;
+          var insertImage = game_item.details.img;
+          var insertLaunch= "";
+
+          //now to check how to launch the game itself
+          if (game_item.details.launch_type == "uri") {
+            //the uri is simply a normal link on the play button.
+            insertLaunch = "<a href='"+game_item.details.launch_cmd+"''><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
+          } else if (game_item.details.launch_type == "cmd") {
+            insertLaunch = "<a href='#' onclick='consoleGameLaunch("+game_item.details.launch_cmd+")'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
+          }
+
+          if (insertLaunch != "") {
+            //confirm the insertLaunch is set
+            displayData += "<div class='grid-item' id='"+insertName+"'><div class='card'><div class='card-body'><div class='card-title'>";
+            displayData += insertLaunch+insertName;
+            displayData += "</div><p class='card-text'>"+insertDescription+"</p>";
+            displayData += "<div class='card-footer text-muted'><img src='"+insertImage+"'/>";
+            displayData += "</div></div></div></div>";
+          } else {
+            console.log("Unrecognized Launch Settings, skipping: "+game_item.details.name);
+          }
+        } catch(err) {
+          console.log("There was an error accessing settings for: "+gameIDs[i]);
+        }
+      }
+    } catch(err) {
+      console.log("There was an error accessing Game Data");
+    }
+  } else {
+    console.log("No Saved games");
+    displayData += "<div class='grid-item' id='no-data'><div class='card'><div class='card-body'><div class='card-title'>";
+    displayData += "Looks like you haven't added any Games yet";
+    displayData += "</div><p class='card-text'>To add some games just click the folder icon on the left! Or read more about it here.</p>";
+    displayData += "<div class='card-footer text-muted'>";
+    displayData += "</div></div></div></div>";
   }
+
+  document.getElementById('game-container').innerHTML += displayData;
+
+  //first create an array of the ID's for Steam,
+  //var displaySteamIds;
+  //try {
+  //  displaySteamIds = (settings.getSync('SteamAppId.list')).split(",");
+  //  console.log("Parsed App ID's for Display: "+displaySteamIds.length);
+  //} catch {
+  //  console.log("No Steam ID's Saved...");
+  //}
 
   //now to create the element to insert in the page.
-  var steamDataToInsert = "";
-  var i;
-  for (i = 0; i < displaySteamIds.length; i++) {
-    var applicationIdentity = displaySteamIds[i];
-    var insertName = settings.getSync(applicationIdentity+'.details.name');
-    var insertDescription = settings.getSync(applicationIdentity+'.details.description');
-    var insertImg = settings.getSync(applicationIdentity+'.details.img');
+  //var steamDataToInsert = "";
+  //var i;
+  //for (i = 0; i < displaySteamIds.length; i++) {
+  //  var applicationIdentity = displaySteamIds[i];
+  //  var insertName = settings.getSync(applicationIdentity+'.details.name');
+  //  var insertDescription = settings.getSync(applicationIdentity+'.details.description');
+  //  var insertImg = settings.getSync(applicationIdentity+'.details.img');
 
-    steamDataToInsert += "<div class='grid-item' id='"+insertName+"'><div class='card'><div class='card-body'><div class='card-title'>";
-    steamDataToInsert += "<a href='steam://rungameid/"+applicationIdentity+"'><img src='./data/images/play.svg' style='float:right; background-color:#212121;'></a>"+insertName;
-    steamDataToInsert += "</div><p class='card-text'>"+insertDescription+"</p>";
-    steamDataToInsert += "<div class='card-footer text-muted'><img src='"+insertImg+"'/>";
-    steamDataToInsert += "</div></div></div></div>";
-  }
-  document.getElementById('game-container').innerHTML += steamDataToInsert;
+  //  steamDataToInsert += "<div class='grid-item' id='"+insertName+"'><div class='card'><div class='card-body'><div class='card-title'>";
+  //  steamDataToInsert += "<a href='steam://rungameid/"+applicationIdentity+"'><img src='./data/images/play.svg' style='float:right; background-color:#212121;'></a>"+insertName;
+  //  steamDataToInsert += "</div><p class='card-text'>"+insertDescription+"</p>";
+  //  steamDataToInsert += "<div class='card-footer text-muted'><img src='"+insertImg+"'/>";
+  //  steamDataToInsert += "</div></div></div></div>";
+  //}
+  //document.getElementById('game-container').innerHTML += steamDataToInsert;
 
   //now to check for Epic Games content
-  if (settings.hasSync('EpicGamesAppId')) {
-    var displayEpicGameIds;
-    try {
-      displayEpicGameIds = (settings.getSync('EpicGamesAppId.list')).split(",");
-      console.log("Parsed App ID's for Display: "+displayEpicGameIds.length);
-    } catch(err) {
-      console.log("Unable to access Saved Ids: "+err);
-    }
-    var epicDataToInsert = "";
-    for (let i =0; i < displayEpicGameIds.length; i++) {
-      var applicationIdentity = displayEpicGameIds[i];
-      var insertName = settings.getSync(applicationIdentity+'.details.name');
-      var insertDescription = settings.getSync(applicationIdentity+'.details.description');
-      var insertImg = settings.getSync(applicationIdentity+'.details.img');
-      var insertLaunch = settings.getSync(applicationIdentity+'.details.launch');
+  //if (settings.hasSync('EpicGamesAppId')) {
+  //  var displayEpicGameIds;
+  //  try {
+  //    displayEpicGameIds = (settings.getSync('EpicGamesAppId.list')).split(",");
+  //    console.log("Parsed App ID's for Display: "+displayEpicGameIds.length);
+  //  } catch(err) {
+  //    console.log("Unable to access Saved Ids: "+err);
+  //  }
+  //  var epicDataToInsert = "";
+  //  for (let i =0; i < displayEpicGameIds.length; i++) {
+  //    var applicationIdentity = displayEpicGameIds[i];
+  //    var insertName = settings.getSync(applicationIdentity+'.details.name');
+  //    var insertDescription = settings.getSync(applicationIdentity+'.details.description');
+  //    var insertImg = settings.getSync(applicationIdentity+'.details.img');
+  //    var insertLaunch = settings.getSync(applicationIdentity+'.details.launch');
 
-      epicDataToInsert += "<div class='grid-item' id='"+insertName+"'><div class='card'><div class='card-body'><div class='card-title'>";
-      epicDataToInsert += "<a href='"+insertLaunch+"'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>"+insertName;
-      epicDataToInsert += "</div><p class='card-text'>"+insertDescription+"</p>";
-      epicDataToInsert += "<div class='card-footer text-muted'><img src='"+insertImg+"'/>";
-      epicDataToInsert += "</div></div></div></div>";
-    }
-    document.getElementById('game-container').innerHTML += epicDataToInsert;
-  }
+  //    epicDataToInsert += "<div class='grid-item' id='"+insertName+"'><div class='card'><div class='card-body'><div class='card-title'>";
+  //    epicDataToInsert += "<a href='"+insertLaunch+"'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>"+insertName;
+  //    epicDataToInsert += "</div><p class='card-text'>"+insertDescription+"</p>";
+  //    epicDataToInsert += "<div class='card-footer text-muted'><img src='"+insertImg+"'/>";
+  //    epicDataToInsert += "</div></div></div></div>";
+  //  }
+  //  document.getElementById('game-container').innerHTML += epicDataToInsert;
+  //}
 
 }
 
@@ -413,6 +468,27 @@ function filterSearch() {
 
 }
 
+function consoleGameLaunch(cmd) {
+  let bat = spawn("cmd.exe", [
+    "/c",   //argument for cmd.exe to carry out the script
+    "",     //path to file
+    "",     //first argument
+    "",     //n-th argument
+  ]);
+
+  bat.stdout.on("data", (data) => {
+    //handle data 
+  });
+
+  bat.stderr.on("data", (err) => {
+    //handle error...
+  });
+
+  bat.on("exit", (code) => {
+    //handle exit...
+  });
+}
+
 function GameInspectorV2() {
   //Generation 2 of the Game Scanning logic.
   //In hopes of reducing complexity and resource usage.
@@ -453,7 +529,7 @@ function DirInspectorV2(startDir) {
       //this will loop through every folder in the selected root
       var root_check = startDir+"/"+Root[i];
       //this defines our working directory,
-      MatchCheckV2(Root[i], root_check);
+      MatchCheckV2(Root[i], root_check, startDir);
       //calls MatchCheck with working directory, and the folder name
       var root_lstat_check;
       //this will help avoid the exception thrown by lstatSync
@@ -476,7 +552,7 @@ function DirInspectorV2(startDir) {
         const secondary_R = fs.readdirSync(root_check);
         for (let u = 0; u < secondary_R.length; u++) {
           var secondary_check = root_check+"/"+secondary_R[u];
-          MatchCheckV2(secondary_R[u], secondary_check);
+          MatchCheckV2(secondary_R[u], secondary_check, startDir);
           var secondary_lstat_check;
           try {
             secondary_lstat_check = fs.lstatSync(secondary_check).isDirectory();
@@ -488,7 +564,7 @@ function DirInspectorV2(startDir) {
             const tertiary_R = fs.readdirSync(secondary_check);
             for (let y = 0; y < tertiary_R.length; y++) {
               var tertiary_check = secondary_check+"/"+tertiary_R[y];
-              MatchCheckV2(tertiary_R[y], tertiary_check);
+              MatchCheckV2(tertiary_R[y], tertiary_check, startDir);
               var tertiary_lstat_check;
               try {
                 tertiary_lstat_check = fs.lstatSync(tertiary_check).isDirectory();
@@ -500,7 +576,7 @@ function DirInspectorV2(startDir) {
                 const quaternary_R = fs.readdirSync(tertiary_check);
                 for (let t = 0; t < quaternary_R.length; t++) {
                   var quaternary_check = tertiary_check+"/"+quaternary_R[t];
-                  MatchCheckV2(quaternary_R[t], quaternary_check);
+                  MatchCheckV2(quaternary_R[t], quaternary_check, startDir);
                   var quaternary_lstat_check;
                   try {
                     quaternary_lstat_check = fs.lstatSync(quaternary_check).isDirectory();
@@ -512,7 +588,7 @@ function DirInspectorV2(startDir) {
                     const quinary_R = fs.readdirSync(quaternary_check);
                     for (let r = 0; r < quinary_R.length; r++) {
                       var quinary_check = quaternary_check+"/"+quinary_R[r];
-                      MatchCheckV2(quinary_R[r], quinary_check);
+                      MatchCheckV2(quinary_R[r], quinary_check, startDir);
                       //at this point this is 5 hops down, and should be enough of a check.
                       resolve("true");
                     }
@@ -527,7 +603,7 @@ function DirInspectorV2(startDir) {
   });
 }
 
-function MatchCheckV2(fileToScan, workingDir) {
+function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
   //sanity checks
   //console.log("Provided File: "+fileToScan);
   //console.log("Provided Directory: "+workingDir);
@@ -539,7 +615,7 @@ function MatchCheckV2(fileToScan, workingDir) {
   if (fileToScan.includes("acf") && workingDir.includes("steamapps")) {
     var foundSteamId = fileToScan.replace(/\D/g, '');
     console.log("Steam Game: "+foundSteamId);
-    steamApiV2(foundSteamId, workingDir)
+    steamApiV2(foundSteamId, workingDir, chosenLibrary)
     .then(res => {
       console.log(res);
     })
@@ -556,7 +632,7 @@ function MatchCheckV2(fileToScan, workingDir) {
       }
       let res = JSON.parse(data);
       console.log("Epic Game: "+res.AppName);
-      epicApiV2(res.AppName, workingDir)
+      epicApiV2(res.AppName, workingDir, chosenLibrary)
       .then(res => {
         console.log(res);
       })
@@ -578,7 +654,7 @@ function MatchCheckV2(fileToScan, workingDir) {
   }
 
   //CoD Modern Warfare Check
-  else if (fileToScan.includes("ModernWarfare") && workingDir.includes("Call of Duty Modern Warfare")) {
+  else if (fileToScan.includes("Modern Warfare Launcher.exe") && workingDir.includes("Call of Duty Modern Warfare")) {
     console.log("Call of Duty Modern Warfare Found");
   }
 
@@ -599,7 +675,7 @@ function MatchCheckV2(fileToScan, workingDir) {
 
 }
 
-function steamApiV2(applicationID, loc) {
+function steamApiV2(applicationID, loc, chosenLibrary) {
   console.log("SteamApiV2 Accessed");
   return new Promise(function(resolve, reject) {
     //firstly to make the API request for game data
@@ -633,7 +709,7 @@ function steamApiV2(applicationID, loc) {
   });
 }
 
-function epicApiV2(applicationID, loc) {
+function epicApiV2(applicationID, loc, chosenLibrary) {
   return new Promise(function(resolve, reject) {
     //first to retreive the fingerprintDB
     try {
@@ -668,7 +744,7 @@ function epicApiV2(applicationID, loc) {
   });
 }
 
-function otherApiV1(applicationID, loc) {
+function otherApiV1(applicationID, loc, chosenLibrary) {
   //while there was never an OtherV1, I'm naming this V2
   //to keep in line with the new methodalogy
   return new Promise(function(resolve, reject) {
