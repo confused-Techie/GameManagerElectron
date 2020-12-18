@@ -6,7 +6,7 @@ const settings = require('electron-settings');
 const fetch = require('node-fetch');
 const keytar = require('keytar');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const shell = require('node-powershell');
 
 //this is for handling all search features
 var searchInputElement = document.getElementById("searchTextField");
@@ -24,7 +24,7 @@ function (event) {
 //This is the startup function, loading needed elements
 function startFunction() {
   initSettings();
-  //sidebarVis();
+  sidebarVis();
   gameLibraryVis();
 
   //this is for loading the searchList
@@ -40,6 +40,12 @@ function initSettings() {
     //so declare as false
     settings.setSync('discordLink', {
       status: false
+    });
+  }
+
+  if (!settings.hasSync('game_list')) {
+    settings.setSync('game_list', {
+      list: "",
     });
   }
 
@@ -83,7 +89,7 @@ function gameLibraryVis() {
 
   //this will be V2 of displaying the games with the new settings framework
   var displayData = "";
-  if (settings.hasSync('game_list')) {
+  if (settings.hasSync('game_list') && settings.getSync('game_list.list') != "") {
     //ensure the game list exists
     try {
       gameIDs = (settings.getSync('game_list.list')).split(",");
@@ -101,7 +107,8 @@ function gameLibraryVis() {
             //the uri is simply a normal link on the play button.
             insertLaunch = "<a href='"+game_item.details.launch_cmd+"''><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
           } else if (game_item.details.launch_type == "cmd") {
-            insertLaunch = "<a href='#' onclick='consoleGameLaunch("+game_item.details.launch_cmd+")'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
+            //insertLaunch = "<a href='#' onclick='consoleGameLaunch('"+game_item.details.launch_cmd+"')'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
+            insertLaunch = `<a href='#' onclick='consoleGameLaunch(${JSON.stringify(game_item.details.launch_cmd)})'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>`;
           }
 
           if (insertLaunch != "") {
@@ -187,53 +194,71 @@ function gameLibraryVis() {
 }
 
 function sidebarVis() {
+
+  //firstly clear current settings
+  document.getElementById('sidebar-container').innerHTML = "";
+  var sidebarDataToInsert = "";
+  //first to load saved libraries
+  if (settings.hasSync('game-list')) {
+
+  } else {
+    console.log("No Saved libraries");
+    sidebarDataToInsert += "<div class='sidebar-item'><div><dl><dt>Libraries</dt><hr>";
+    sidebarDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
+    sidebarDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
+    sidebarDataToInsert += "</dl></div>";
+  }
+
+  document.getElementById('sidebar-container').innerHTML = sidebarDataToInsert;
+
+
   //First tab will be saved Libraries
-  if (settings.hasSync('SavedLibraries')) {
-    var displaySavedLibrary = (settings.getSync('SavedLibraries.fullList')).split(",");
+  //if (settings.hasSync('SavedLibraries')) {
+  //  var displaySavedLibrary = (settings.getSync('SavedLibraries.fullList')).split(",");
 
-    var libraryDataToInsert = "";
-    var i;
-    libraryDataToInsert += "<div class='sidebar-item'><dl><dt>Libraries</dt><hr>";
-    for (i = 0; i < displaySavedLibrary.length; i++) {
-      var insertLibrary = displaySavedLibrary[i];
-      libraryDataToInsert += "<dd>"+insertLibrary+"</dd>";
-    }                                                //normally addLibrary()
-    libraryDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
-    libraryDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
-    libraryDataToInsert += "</dl></div>";
-    document.getElementById('sidebar-container').innerHTML += libraryDataToInsert;
-  } else {
-    console.log('No Saved libraries');
-    var libraryDataToInsert = "";
-    libraryDataToInsert += "<div class='sidebar-item'><div><dl><dt>Libraries</dt><hr>";
-    libraryDataToInsert += "<dd><a href='#' onclick='addLibrary()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
-    libraryDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
-    libraryDataToInsert += "</dl></div>";
-    document.getElementById('sidebar-container').innerHTML += libraryDataToInsert;
-  }
+  //  var libraryDataToInsert = "";
+  //  var i;
+  //  libraryDataToInsert += "<div class='sidebar-item'><dl><dt>Libraries</dt><hr>";
+  //  for (i = 0; i < displaySavedLibrary.length; i++) {
+  //    var insertLibrary = displaySavedLibrary[i];
+  //    libraryDataToInsert += "<dd>"+insertLibrary+"</dd>";
+  //  }                                                //normally addLibrary()
+  //  libraryDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
+  //  libraryDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
+  //  libraryDataToInsert += "</dl></div>";
+  //  document.getElementById('sidebar-container').innerHTML += libraryDataToInsert;
+  //} else {
+  //  console.log('No Saved libraries');
+  //  var libraryDataToInsert = "";
+  //  libraryDataToInsert += "<div class='sidebar-item'><div><dl><dt>Libraries</dt><hr>";
+  //  libraryDataToInsert += "<dd><a href='#' onclick='addLibrary()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
+  //  libraryDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
+  //  libraryDataToInsert += "</dl></div>";
+  //  document.getElementById('sidebar-container').innerHTML += libraryDataToInsert;
+  //}
 
-  if (settings.getSync('discordLink.status')) {
-    console.log("Discord Successfully Linked");
-    try {
-      var discordDataToInsert = "";
-      DiscordAPI("user_name").then(retreivedUser => {
-        console.log("Retreived Username for Sidebar: "+retreivedUser);
-        DiscordAPI("user_icon").then(discordIcon => {
-          discordDataToInsert += "<div class='sidebar-item'><dl><dt>Discord</dt><hr>";
-          discordDataToInsert += `<div class="imgCenter"><img src='${discordIcon}' alt="Discord Profile Icon" style='height:30px;width:30px;float:left;'></div>`;
-          discordDataToInsert += "<dd>"+retreivedUser+"</dd>";
-          discordDataToInsert += "</dl></div>";
-          document.getElementById('sidebar-container').innerHTML += discordDataToInsert;
-        });
-      });
-    }
-    catch(ex) {
-      console.log("Unable to access saved Discord Data: "+ex);
-    }
-  } else {
-    console.log("Discord has not been linked");
-    document.getElementById('sidebar-container').innerHTML += "<div onclick='linkDiscord()'>Link your Discord!</div>";
-  }
+  //if (settings.getSync('discordLink.status')) {
+  //  console.log("Discord Successfully Linked");
+  //  try {
+  //    var discordDataToInsert = "";
+  //    DiscordAPI("user_name").then(retreivedUser => {
+  //      console.log("Retreived Username for Sidebar: "+retreivedUser);
+  //      DiscordAPI("user_icon").then(discordIcon => {
+  //        discordDataToInsert += "<div class='sidebar-item'><dl><dt>Discord</dt><hr>";
+  //        discordDataToInsert += `<div class="imgCenter"><img src='${discordIcon}' alt="Discord Profile Icon" style='height:30px;width:30px;float:left;'></div>`;
+  //        discordDataToInsert += "<dd>"+retreivedUser+"</dd>";
+  //        discordDataToInsert += "</dl></div>";
+  //        document.getElementById('sidebar-container').innerHTML += discordDataToInsert;
+  //      });
+  //    });
+  //  }
+  //  catch(ex) {
+  //    console.log("Unable to access saved Discord Data: "+ex);
+  //  }
+  //} else {
+  //  console.log("Discord has not been linked");
+  //  document.getElementById('sidebar-container').innerHTML += "<div onclick='linkDiscord()'>Link your Discord!</div>";
+  //}
 
 }
 
@@ -469,23 +494,18 @@ function filterSearch() {
 }
 
 function consoleGameLaunch(cmd) {
-  let bat = spawn("cmd.exe", [
-    "/c",   //argument for cmd.exe to carry out the script
-    "",     //path to file
-    "",     //first argument
-    "",     //n-th argument
-  ]);
-
-  bat.stdout.on("data", (data) => {
-    //handle data 
+  const ps = new shell({
+    executionPolicy: 'Bypass',
+    noProfile: true
   });
 
-  bat.stderr.on("data", (err) => {
-    //handle error...
-  });
-
-  bat.on("exit", (code) => {
-    //handle exit...
+  ps.addCommand(cmd);
+  ps.invoke()
+  .then(output => {
+    console.log(output);
+  })
+  .catch(err => {
+    console.log(err);
   });
 }
 
@@ -661,6 +681,13 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
   //Valorant Check
   else if (fileToScan.includes("VALORANT.exe") && workingDir.includes("VALORANT")) {
     console.log("Valorant Found");
+    otherApiV1('valorant_riot', workingDir, chosenLibrary)
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log(err);
+    });
   }
 
   //League of Legends Check
@@ -687,12 +714,36 @@ function steamApiV2(applicationID, loc, chosenLibrary) {
           try {
             if (!settings.hasSync(applicationID)) {
               //put the rest of the logic for sving here
-              resolve("Successfully Saved SteamAPI Settings: "+res[applicationID].data.name);
+              try {
+                settings.setSync(applicationID, {
+                  details: {
+                    appid: applicationID,
+                    description: res[applicationID].data.short_description,
+                    img: res[applicationID].data.header_image,
+                    name: res[applicationID].data.name,
+                    provider: "Steam",
+                    library: chosenLibrary,
+                    location: loc,
+                    launch_type: "uri",
+                    launch_cmd: `steam://rungameid/${applicationID}`
+                  }
+                });
+                gameListManager(applicationID).then(gameListRes => {
+                  resolve("Successfully Saved SteamAPI Settings: "+res[applicationID].data.name);
+                }).catch(gameListerr => {
+                  reject("Generic Error on game_list save: "+gameListerr);
+                });
+
+              } catch(err) {
+                console.log("Error saving Steam API Settings for: "+res[applicationID].data.name+":: Error: "+err);
+                reject("Error saving Steam API Settings for: "+res[applicationID].data.name+":: Error: "+err);
+              }
+
             } else {
               console.log("This SteamID is already saved: "+res[applicationID].data.name);
               reject("Already Saved This SteamID: "+res[applicationID].data.name);
             }
-            resolve("Successfully Saved SteamAPi Settings: "+res[applicationID].data.name);
+            //resolve("Successfully Saved SteamAPi Settings: "+res[applicationID].data.name);
           } catch(err) {
             console.log("Error: Saving Settings: "+err);
             reject("Error: Saving Settings: "+err);
@@ -727,7 +778,30 @@ function epicApiV2(applicationID, loc, chosenLibrary) {
                 if (!settings.hasSync(applicationID)) {
                   //confirm it hasn't already been saved
                   //rest of save logic here
-                  resolve("Successfully Saved EpicApi Settings for: "+applicationID);
+                  try {
+                    settings.setSync(applicationID, {
+                      details: {
+                        appid: applicationID,
+                        description: FingerPrintDB.games[y].meta_data.description,
+                        img: FingerPrintDB.games[y].meta_data.img,
+                        name: FingerPrintDB.games[y].name,
+                        provider: "Epic Games",
+                        library: chosenLibrary,
+                        location: loc,
+                        launch_type: "uri",
+                        launch_cmd: FingerPrintDB.games[y].launch.cmd
+                      }
+                    });
+                    gameListManager(applicationID).then(gameListRes => {
+                      resolve("Successfully Saved Epic API Settings: "+FingerPrintDB.games[y].name);
+                    }).catch(gameListerr => {
+                      reject("Generic Error on game_list save: "+gameListerr);
+                    });
+                  } catch(err) {
+                    console.log("Error saving Epic Games API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
+                    reject("Error saving Epic Games API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
+                  }
+                  //resolve("Successfully Saved EpicApi Settings for: "+applicationID);
                 } else {
                   reject("Already Saved This Epic ID: "+applicationID);
                 }
@@ -747,6 +821,7 @@ function epicApiV2(applicationID, loc, chosenLibrary) {
 function otherApiV1(applicationID, loc, chosenLibrary) {
   //while there was never an OtherV1, I'm naming this V2
   //to keep in line with the new methodalogy
+  console.log("Other API V1 accessed");
   return new Promise(function(resolve, reject) {
     try {
       fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
@@ -762,6 +837,33 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
                 if (!settings.hasSync(applicationID)) {
                   //confirm it hasn't already been saved
                   //rest of save logic here
+                  try {
+                    var tempLaunchDec;
+                    if (FingerPrintDB.games[y].launch.method == "command_line:original") {
+                      tempLaunchDec = 'start "'+loc+'" '+FingerPrintDB.games[y].launch.cmd;
+                    }
+                    settings.setSync(applicationID, {
+                      details: {
+                        appid: applicationID,
+                        description: FingerPrintDB.games[y].meta_data.description,
+                        img: FingerPrintDB.games[y].meta_data.img,
+                        name: FingerPrintDB.games[y].name,
+                        provider: FingerPrintDB.games[y].search_method,
+                        library: chosenLibrary,
+                        location: loc,
+                        launch_type: "cmd",
+                        launch_cmd: tempLaunchDec
+                      }
+                    });
+                    gameListManager(applicationID).then(gameListRes => {
+                      resolve("Successfully Saved Other API Settings: "+FingerPrintDB.games[y].name);
+                    }).catch(gameListerr => {
+                      reject("Generic Error on game_list save: "+gameListerr);
+                    })
+                  } catch(err) {
+                    console.log("Error saving Other API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
+                    reject("Error saving Other API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
+                  }
                   resolve("Successfully Saved This Game ID: "+applicationID + "/"+FingerPrintDB.games[y].name);
                 } else {
                   reject("Already Saved This Game ID: "+applicationID +"/"+FingerPrintDB.games[y].name);
@@ -775,6 +877,65 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
       });
     } catch(err) {
       reject("Error: During Reading Database: "+err);
+    }
+  });
+}
+
+function gameListManager(applicationID) {
+  return new Promise(function(resolve, reject) {
+    //this will be in charge of keeping an up to date list of all games
+    //that have been saved via their appID's using the game_list setting.
+
+    //first ensure the setting has been set.
+    //which it should since its in ini
+    if (settings.hasSync('game_list')) {
+      var tempGameCheck = settings.getSync('game_list.list');
+      console.log("tempGameCheck: "+tempGameCheck);
+      if ( !tempGameCheck.includes(applicationID) ) {
+        //ensure that it has not already been set.
+        //then backup current settings.
+        var tempList;
+        if (settings.getSync('game_list.list') != "") {
+          console.log("game_list is not empty: Adding...");
+          tempList = settings.getSync('game_list');
+          try {
+            settings.setSync('game_list', {
+              list: tempList.list+","+applicationID
+            });
+            console.log("Successfully added to game_list");
+            resolve("Successfully added "+applicationID+" to game_list");
+          } catch(err) {
+            console.log("Error: Saving game_list settings: "+err);
+            reject("Error: Saving game_list settings: "+err);
+          }
+        } else {
+          console.log("game_list is empty: Creating...");
+          try {
+            settings.setSync('game_list', {
+              list: applicationID+""
+            });
+            console.log("Successfully added to game_list");
+            resolve("Successfully added "+applicationID+" to game_list");
+          } catch(err) {
+            console.log("Error: Saving to game_list settings: "+err);
+            reject("Error: Saving game_list settings: "+err);
+          }
+        }
+        //tempList += settings.getSync('game_list.list');
+        //try {
+        //  settings.setSync('game_list', {
+        //    list: tempList.list+","+applicationID,
+        //  });
+        //  console.log("Successfully added to game_list");
+        //  resolve("Successfully added "+applicationID+" to game_list");
+        //} catch(err) {
+        //  console.log("Error: Saving game_list settings: "+err);
+        //  reject("Error: Saving game_list settings: "+err);
+        //}
+      }
+    } else {
+      console.log("Error: game_list not set.");
+      reject("Error: game_list not set.");
     }
   });
 }
