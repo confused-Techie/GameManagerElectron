@@ -693,11 +693,37 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
   //League of Legends Check
   else if (fileToScan.includes("LeagueClient.exe") && workingDir.includes("League of Legends")) {
     console.log("League of Legends Found");
+    otherApiV1('league_legends_riot', workingDir, chosenLibrary)
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log(err)
+    });
   }
 
   //Final Fantasy XIV - A Realm Reborn Check
   else if (fileToScan.includes("ffxivboot.exe") && workingDir.includes("SquareEnix")) {
     console.log("Final Fantasy XIV - A Realm Reborn Found");
+    otherApiV1('ffXIVaRR', workingDir, chosenLibrary)
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log(err);
+    });
+  }
+
+  //Sims 4 - Origin
+  else if (fileToScan.includes("TS4_x64.exe") && workingDir.includes("The Sims 4") && workingDir.includes("Game")) {
+    console.log("The Sims 4 Found");
+    otherApiV1('sims4_origin', workingDir, chosenLibrary)
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log(err);
+    });
   }
 
 }

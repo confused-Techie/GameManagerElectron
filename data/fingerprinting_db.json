@@ -1,6 +1,58 @@
 {
   "games": [
     {
+      "name": "The Sims 4",
+      "search_method": "origin",
+      "unique_id": "sims4_origin",
+      "launch": {
+        "method": "command_line:original",
+        "cmd": ""
+      },
+      "meta_data": {
+        "img": "https://steamcdn-a.akamaihd.net/steam/apps/1222670/header.jpg?t=1608238350",
+        "description": "Play with life and discover the possibilities. Unleash your imagination and create a world of Sims that’s wholly unique. Explore and customize every detail from Sims to homes–and much more."
+      }
+    },
+    {
+      "name": "Final Fantasy XIV - A Realm Reborn",
+      "search_method": "square_enix",
+      "unique_id": "ffXIVaRR",
+      "launch": {
+        "method": "command_live:original",
+        "cmd": ""
+      },
+      "meta_data": {
+        "img": "https://steamcdn-a.akamaihd.net/steam/apps/39210/header.jpg?t=1600280372",
+        "description": "Take part in an epic and ever-changing FINAL FANTASY as you adventure and explore with friends from around the world."
+      }
+    },
+    {
+      "name": "League of Legends",
+      "search_method": "riot_games",
+      "unique_id": "league_legends_riot",
+      "launch": {
+        "method": "command_line:original",
+        "cmd": ""
+      },
+      "meta_data": {
+        "img": "https://theme.zdassets.com/theme_assets/43400/87a1ef48e43b8cf114017e3ad51b801951b20fcf.jpg",
+        "description": "League of Legends is a team-based strategy game where two teams of five powerful champions face off to destroy the other’s base. Choose from over 140 champions to make epic plays, secure kills, and take down towers as you battle your way to victory"
+      }
+    },
+    {
+      "name": "Minecraft Java Edition",
+      "search_method": "mojang",
+      "unique_id": "minecraft_java",
+      "launch": {
+        "method": "command_line:original",
+        "cmd": ""
+      },
+      "meta_data": {
+        "img": "https://www.minecraft.net/content/dam/games/minecraft/key-art/Games_Subnav_Minecraft-300x465.jpg",
+        "description": "Explore your own unique world, survive the night, and create anything you can imagine!"
+      }
+    },
+    {
       "name": "Valorant",
       "search_method": "riot_games",
       "unique_id": "valorant_riot",
