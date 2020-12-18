@@ -666,11 +666,25 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
   else if (fileToScan == "MinecraftLauncher.exe" && workingDir.includes("Minecraft Launcher")) {
     console.log("Minecraft Java Edition Found");
     //tesst by scanning Program Files (x86)
+    otherApiV1('minecraft_java', workingDir, chosenLibrary)
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err = > {
+      console.log(err);
+    });
   }
 
   //CoD Black Ops Cold War Check
   else if (fileToScan.includes("BlackOpsColdWar") && workingDir.includes("Call of Duty Black Ops Cold War")) {
     console.log("Call of Duty Black Ops Cold War Found");
+    otherApiV1('CoD_bocw', workingDir, chosenLibrary)
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log(err);
+    });
   }
 
   //CoD Modern Warfare Check
