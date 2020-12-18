@@ -691,12 +691,12 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
   }
 
   //League of Legends Check
-  else if (fileToScan.includes("LeagueClient") && workingDir.includes("League of Legends")) {
+  else if (fileToScan.includes("LeagueClient.exe") && workingDir.includes("League of Legends")) {
     console.log("League of Legends Found");
   }
 
   //Final Fantasy XIV - A Realm Reborn Check
-  else if (fileToScan.includes("ffxiv.exe") && workingDir.includes("SquareEnix")) {
+  else if (fileToScan.includes("ffxivboot.exe") && workingDir.includes("SquareEnix")) {
     console.log("Final Fantasy XIV - A Realm Reborn Found");
   }
 
