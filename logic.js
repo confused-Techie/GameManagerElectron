@@ -29,6 +29,10 @@ function startFunction() {
 
   //this is for loading the searchList
   searchList();
+  //gameUpdateCheck();
+  // While this could be called right away, in testing it added nearly 70~100ms to
+  //first load the page. Will have it run in the background, after load
+  setTimeout(gameUpdateCheck, 2000);
 }
 
 function initSettings() {
@@ -44,6 +48,12 @@ function initSettings() {
   if (!settings.hasSync('game_list')) {
     settings.setSync('game_list', {
       list: "",
+    });
+  }
+
+  if (!settings.hasSync('last_game_scan')) {
+    settings.setSync('last_game_scan', {
+      time: 0
     });
   }
 
@@ -139,7 +149,7 @@ function sidebarVis() {
   //add the return to top arrow
   sidebarDataToInsert += "<a href='#topOfPage'><img src='./data/images/arrow-up-circle.svg' style='width:20px;float:right;margin-right:20px;background-color:#212121;'></a>";
   //first to load saved libraries
-  if (settings.hasSync('game_list')) {
+  if (settings.hasSync('game_list') && settings.getSync('game_list.list') != "") {
     sidebarDataToInsert += "<div class='sidebar-item'><div><dl><dt>Libraries</dt><hr>";
     try {
       const librariesToInsert = [];
@@ -205,6 +215,63 @@ function sidebarVis() {
   //  document.getElementById('sidebar-container').innerHTML += "<div onclick='linkDiscord()'>Link your Discord!</div>";
   //}
 
+}
+
+function gameUpdateCheck() {
+  if (settings.hasSync('last_game_scan')) {
+    var currentTimeCheck = new Date();
+    if (currentTimeCheck.getTime() - settings.getSync('last_game_scan.time') >  14400000) {
+      console.log("Starting game update check");
+      //used to check if any games have been deleted or moved
+      if (settings.hasSync('game_list') && settings.getSync('game_list.list') != "") {
+        try {
+          let gameIDs = (settings.getSync('game_list.list')).split(",");
+          for (let i = 0; i < gameIDs.length; i++) {
+            let game_item = settings.getSync(gameIDs[i]);
+            try {
+              if (!fs.existsSync(game_item.details.location)) {
+                console.log("Couldn't Find: "+game_item.details.name);
+                gameNotifManager("game_scan", game_item.details.name);
+                try {
+                  settings.unsetSync(game_item.details.appid);  //first remove the main data
+                  let game_item_pos = gameIDs.indexOf(game_item.details.appid); //finds the position of the game
+                  let post_removed_item = gameIDs.splice(game_item_pos, 1); //removes one game based on its position
+                  try {
+                    settings.setSync('game_list', {
+                      list: gameIDs+""
+                    });
+                    console.log("Successfully removed: "+game_item.details.name);
+                    startFunction();
+                  } catch(err) {
+                    console.log("Error Removing game from game list: "+err);
+                    gameNotifManager("err", "Error Removing game from game list: "+err);
+                  }
+                } catch(err) {
+                  console.log("Unable to remove: "+game_item.details.name+"::"+err);
+                  gameNotifManager("err", "Error: Unable to remove: "+game_item.details.name+"::"+err);
+                }
+              }
+            } catch(err) {
+              console.log("Error checking file status of game: "+err);
+              gameNotifManager("err", "Error checking file status of game: "+err);
+            }
+          }
+          var currentTimeSave = new Date();
+          settings.setSync('last_game_scan', {
+            time: currentTimeSave.getTime()
+          });
+        } catch(err) {
+          console.log("Error Checking game list: "+err);
+          gameNotifManager("err", "Error checking game list: "+err);
+        }
+      }
+    } else {
+      console.log("Game Library was scanned less than 4 hours ago");
+    }
+  } else {
+    console.log("Error: Last Game Scan doesn't exist");
+    gameNotifManager("err", "Error: Last Game Scan doesn't exist");
+  }
 }
 
 function linkDiscord() {
@@ -952,7 +1019,6 @@ function gameListManager(applicationID) {
 }
 
 function gameNotifManager(type, content) {
-  console.log("GameNotifManager accessed");
   if (type == "create") {
     //this means the gameNotif is being called to create
     //a notification that games are being scanned.
@@ -964,6 +1030,11 @@ function gameNotifManager(type, content) {
     document.getElementById('alert-overlay').style.backgroundColor = "#700f0f";
     document.getElementById('alert-overlay').style.color = "black";
     document.getElementById('alert-overlay').innerText = content;
+    document.getElementById('alert-overlay').style.display = "block";
+  } else if (type == "game_scan") {
+    document.getElementById('alert-overlay').style.backgroundColor = "#66edff";
+    document.getElementById('alert-overlay').style.color = "black";
+    document.getElementById('alert-overlay').innerText = "Couldn't find "+content+". Removing it from your library.";
     document.getElementById('alert-overlay').style.display = "block";
   }
 }
