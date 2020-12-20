@@ -28,9 +28,7 @@ function startFunction() {
   gameLibraryVis();
 
   //this is for loading the searchList
-  //searchList();
-  //searchList will be disabled while moving everything to V2 structure
-  //as well as sidebarVis will be disbaled until V2
+  searchList();
 }
 
 function initSettings() {
@@ -52,35 +50,25 @@ function initSettings() {
 }
 
 function searchList() {
-  var searchListData = "";
+  let searchListDataToInsert = "";
+  document.getElementById('gamesSearch').innerHTML = "";
+  //clear it in case this is recalled.
   try {
-    if (settings.hasSync('SteamAppId')) {
-      console.log("Adding Steam Games to Search List...");
-      //executed if steam apps have been Saved
-      var tempSteamAppIDList = settings.getSync('SteamAppId.list').split(",");
-      var u;
-      for (u=0;u<tempSteamAppIDList.length;u++) {
-        var tempAddToList = settings.getSync(tempSteamAppIDList[u]+'.details.name');
-        searchListData += "<option value='"+tempAddToList+"'>";
+    if (settings.hasSync('game_list') && settings.getSync('game_list.list') != "") {
+      //ensure the game_list exists and isn't empty
+      var tempGameList = (settings.getSync('game_list.list')).split(",");
+      for (let i = 0; i < tempGameList.length; i++) {
+        //now simply loop through all games adding the respective actual game to the search
+        var game_itemName = settings.getSync(tempGameList[i]);
+        searchListDataToInsert += "<option value='"+game_itemName.details.name+"'>";
       }
+    } else {
+      console.log("Game List doesn't exist or is empty.");
     }
-  } catch(ex) {
-    console.log("Attempted to Add Steam Games to Search List: "+ex);
+  } catch(err) {
+    console.log("Error creating search index: "+err);
   }
-  try {
-    if (settings.hasSync('EpicGamesAppId')) {
-      console.log("Adding Epic Games to Search List...");
-      var tempEpicAppIDList = settings.getSync('EpicGamesAppId.list').split(",");
-      for (let u=0; u<tempEpicAppIDList.length; u++) {
-        var tempAddToList = settings.getSync(tempEpicAppIDList[u]+'.details.name');
-        searchListData += "<option value='"+tempAddToList+"'>'";
-        console.log("Added "+tempAddToList+" to Epic Games Search List");
-      }
-    }
-  } catch(ex) {
-    console.log("Attempted to Add Epic Games to Search List: "+ex);
-  }
-  document.getElementById('gamesSearch').innerHTML += searchListData;
+  document.getElementById('gamesSearch').innerHTML += searchListDataToInsert;
 }
 
 function gameLibraryVis() {
@@ -187,32 +175,6 @@ function sidebarVis() {
   }
 
   document.getElementById('sidebar-container').innerHTML = sidebarDataToInsert;
-
-
-  //First tab will be saved Libraries
-  //if (settings.hasSync('SavedLibraries')) {
-  //  var displaySavedLibrary = (settings.getSync('SavedLibraries.fullList')).split(",");
-
-  //  var libraryDataToInsert = "";
-  //  var i;
-  //  libraryDataToInsert += "<div class='sidebar-item'><dl><dt>Libraries</dt><hr>";
-  //  for (i = 0; i < displaySavedLibrary.length; i++) {
-  //    var insertLibrary = displaySavedLibrary[i];
-  //    libraryDataToInsert += "<dd>"+insertLibrary+"</dd>";
-  //  }                                                //normally addLibrary()
-  //  libraryDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
-  //  libraryDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
-  //  libraryDataToInsert += "</dl></div>";
-  //  document.getElementById('sidebar-container').innerHTML += libraryDataToInsert;
-  //} else {
-  //  console.log('No Saved libraries');
-  //  var libraryDataToInsert = "";
-  //  libraryDataToInsert += "<div class='sidebar-item'><div><dl><dt>Libraries</dt><hr>";
-  //  libraryDataToInsert += "<dd><a href='#' onclick='addLibrary()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
-  //  libraryDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
-  //  libraryDataToInsert += "</dl></div>";
-  //  document.getElementById('sidebar-container').innerHTML += libraryDataToInsert;
-  //}
 
   //if (settings.getSync('discordLink.status')) {
   //  console.log("Discord Successfully Linked");
