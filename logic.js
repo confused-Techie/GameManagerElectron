@@ -670,7 +670,7 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
     .then(res => {
       console.log(res);
     })
-    .catch(err = > {
+    .catch(err => {
       console.log(err);
     });
   }
@@ -881,6 +881,10 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
                     var tempLaunchDec;
                     if (FingerPrintDB.games[y].launch.method == "command_line:original") {
                       tempLaunchDec = 'start "'+loc+'" '+FingerPrintDB.games[y].launch.cmd;
+                    } else if (FingerPrintDB.games[y].launch.method == "command_line:battle") {
+
+                    } else if (FingerPrintDB.games[y].launch.method == "command_line:riot") {
+
                     }
                     settings.setSync(applicationID, {
                       details: {
@@ -980,7 +984,7 @@ function gameListManager(applicationID) {
   });
 }
 
-function addLibrary() {
+function OLDaddLibrary() {
 
   result = dialog.showOpenDialogSync({
     title: "Add Game Library",
@@ -1098,7 +1102,7 @@ function addLibrary() {
   }
 }
 
-function detectProvider(directory) {
+function OLDdetectProvider(directory) {
   const fs = require('fs');
   const root = fs.readdirSync(directory);
   console.log("Root Directory detected: "+root);
@@ -1132,7 +1136,7 @@ function detectProvider(directory) {
   return "None";
 }
 
-function collectSteamIds(directory) {
+function OLDcollectSteamIds(directory) {
   const fs = require('fs');
   const root = fs.readdirSync(directory);
   var steamRoot;
@@ -1158,7 +1162,7 @@ function collectSteamIds(directory) {
   //this should return an array of App Ids
 }
 
-function collectEpicIds(directory) {
+function OLDcollectEpicIds(directory) {
   return new Promise(function(resolve, reject) {
     const root = fs.readdirSync(directory);
     var epicParentDir = new Array();
@@ -1211,7 +1215,7 @@ function collectEpicIds(directory) {
   });
 }
 
-function steamApi(applicationid) {
+function OLDsteamApi(applicationid) {
   console.log("Provided ID: " + applicationid);
 
  const request = net.request('http://store.steampowered.com/api/appdetails/?appids='+applicationid);
@@ -1254,7 +1258,7 @@ function steamApi(applicationid) {
   //return true;
 }
 
-function epic_gamesApi(applicationidArray) {
+function OLDepic_gamesApi(applicationidArray) {
   return new Promise(function(resolve, reject) {
     //add method to check if all games have been saved.
     var gameSavedCheck = new Array();
