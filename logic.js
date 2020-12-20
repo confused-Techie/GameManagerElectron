@@ -138,59 +138,6 @@ function gameLibraryVis() {
   }
 
   document.getElementById('game-container').innerHTML += displayData;
-
-  //first create an array of the ID's for Steam,
-  //var displaySteamIds;
-  //try {
-  //  displaySteamIds = (settings.getSync('SteamAppId.list')).split(",");
-  //  console.log("Parsed App ID's for Display: "+displaySteamIds.length);
-  //} catch {
-  //  console.log("No Steam ID's Saved...");
-  //}
-
-  //now to create the element to insert in the page.
-  //var steamDataToInsert = "";
-  //var i;
-  //for (i = 0; i < displaySteamIds.length; i++) {
-  //  var applicationIdentity = displaySteamIds[i];
-  //  var insertName = settings.getSync(applicationIdentity+'.details.name');
-  //  var insertDescription = settings.getSync(applicationIdentity+'.details.description');
-  //  var insertImg = settings.getSync(applicationIdentity+'.details.img');
-
-  //  steamDataToInsert += "<div class='grid-item' id='"+insertName+"'><div class='card'><div class='card-body'><div class='card-title'>";
-  //  steamDataToInsert += "<a href='steam://rungameid/"+applicationIdentity+"'><img src='./data/images/play.svg' style='float:right; background-color:#212121;'></a>"+insertName;
-  //  steamDataToInsert += "</div><p class='card-text'>"+insertDescription+"</p>";
-  //  steamDataToInsert += "<div class='card-footer text-muted'><img src='"+insertImg+"'/>";
-  //  steamDataToInsert += "</div></div></div></div>";
-  //}
-  //document.getElementById('game-container').innerHTML += steamDataToInsert;
-
-  //now to check for Epic Games content
-  //if (settings.hasSync('EpicGamesAppId')) {
-  //  var displayEpicGameIds;
-  //  try {
-  //    displayEpicGameIds = (settings.getSync('EpicGamesAppId.list')).split(",");
-  //    console.log("Parsed App ID's for Display: "+displayEpicGameIds.length);
-  //  } catch(err) {
-  //    console.log("Unable to access Saved Ids: "+err);
-  //  }
-  //  var epicDataToInsert = "";
-  //  for (let i =0; i < displayEpicGameIds.length; i++) {
-  //    var applicationIdentity = displayEpicGameIds[i];
-  //    var insertName = settings.getSync(applicationIdentity+'.details.name');
-  //    var insertDescription = settings.getSync(applicationIdentity+'.details.description');
-  //    var insertImg = settings.getSync(applicationIdentity+'.details.img');
-  //    var insertLaunch = settings.getSync(applicationIdentity+'.details.launch');
-
-  //    epicDataToInsert += "<div class='grid-item' id='"+insertName+"'><div class='card'><div class='card-body'><div class='card-title'>";
-  //    epicDataToInsert += "<a href='"+insertLaunch+"'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>"+insertName;
-  //    epicDataToInsert += "</div><p class='card-text'>"+insertDescription+"</p>";
-  //    epicDataToInsert += "<div class='card-footer text-muted'><img src='"+insertImg+"'/>";
-  //    epicDataToInsert += "</div></div></div></div>";
-  //  }
-  //  document.getElementById('game-container').innerHTML += epicDataToInsert;
-  //}
-
 }
 
 function sidebarVis() {
@@ -198,9 +145,39 @@ function sidebarVis() {
   //firstly clear current settings
   document.getElementById('sidebar-container').innerHTML = "";
   var sidebarDataToInsert = "";
+  //add the return to top arrow
+  sidebarDataToInsert += "<a href='#topOfPage'><img src='./data/images/arrow-up-circle.svg' style='width:20px;float:right;margin-right:20px;background-color:#212121;'></a>";
   //first to load saved libraries
-  if (settings.hasSync('game-list')) {
-
+  if (settings.hasSync('game_list')) {
+    sidebarDataToInsert += "<div class='sidebar-item'><div><dl><dt>Libraries</dt><hr>";
+    try {
+      const librariesToInsert = [];
+      gameIDs = (settings.getSync('game_list.list')).split(",");
+      for (let i = 0; i < gameIDs.length; i++) {
+        try {
+          game_item = settings.getSync(gameIDs[i]);
+          //now I need to see if the library the game_item has is
+          //in the array of librariesToInsert; To ensure no duplicates
+          try {
+            if (librariesToInsert.indexOf(game_item.details.library) == -1) {
+              //since indexOf returns -1 if no match is found this can be used to ensure it doesn't already exist
+              librariesToInsert.push(game_item.details.library);
+              //then add data to sidebar
+              sidebarDataToInsert += "<dd>"+game_item.details.library+"</dd>";
+            }
+          } catch(err) {
+            console.log("Error checking Library Duplication: "+err);
+          }
+        } catch(err) {
+          console.log("Error retreiving game details: "+err);
+        }
+      }
+    } catch(err) {
+      console.log("Error Reading Game List: "+err);
+    }
+    sidebarDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
+    sidebarDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
+    sidebarDataToInsert += "</dl></div>";
   } else {
     console.log("No Saved libraries");
     sidebarDataToInsert += "<div class='sidebar-item'><div><dl><dt>Libraries</dt><hr>";
