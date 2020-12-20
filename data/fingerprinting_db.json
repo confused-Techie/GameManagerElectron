@@ -57,8 +57,8 @@
       "search_method": "riot_games",
       "unique_id": "valorant_riot",
       "launch": {
-        "method": "command_line:original",
-        "cmd": "--launch-product=valorant"
+        "method": "command_line:riot",
+        "cmd": "--launch-product=valorant --launch-patchline=live"
       },
       "meta_data": {
         "img": "https://images.contentstack.io/v3/assets/bltb6530b271fddd0b1/blta73c882a72c618e3/5ed4150d08ac190a51c6ab88/VALORANT_Logo_V_Lightbox.jpg",

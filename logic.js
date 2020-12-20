@@ -106,7 +106,6 @@ function gameLibraryVis() {
             //the uri is simply a normal link on the play button.
             insertLaunch = "<a href='"+game_item.details.launch_cmd+"''><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
           } else if (game_item.details.launch_type == "cmd") {
-            //insertLaunch = "<a href='#' onclick='consoleGameLaunch('"+game_item.details.launch_cmd+"')'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
             insertLaunch = `<a href='#' onclick='consoleGameLaunch(${JSON.stringify(game_item.details.launch_cmd)})'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>`;
           }
 
@@ -503,20 +502,24 @@ function filterSearch() {
 }
 
 function consoleGameLaunch(cmd) {
-  const ps = new shell({
-    executionPolicy: 'Bypass',
-    noProfile: true
-  });
+  if (cmd == "false") {
+    gameNotifManager("err", "Game client hasn't been detected.");
+  } else {
+    const ps = new shell({
+      executionPolicy: 'Bypass',
+      noProfile: true
+    });
 
-  ps.addCommand(cmd);
-  ps.invoke()
-  .then(output => {
-    console.log(output);
-  })
-  .catch(err => {
-    console.log(err);
-    gameNotifManager("err", err);
-  });
+    ps.addCommand(cmd);
+    ps.invoke()
+    .then(output => {
+      console.log(output);
+    })
+    .catch(err => {
+      console.log(err);
+      gameNotifManager("err", err);
+    });
+  }
 }
 
 function GameInspectorV2() {
@@ -645,7 +648,7 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
 
   //in all of these there need to be checks to ensure no duplicates are saved
   //Steam Check
-  if (fileToScan.includes("acf") && workingDir.includes("steamapps")) {
+  if (fileToScan.includes("acf") && workingDir.includes("steamapps") && !workingDir.includes("steamapps/workshop")) {
     var foundSteamId = fileToScan.replace(/\D/g, '');
     console.log("Steam Game: "+foundSteamId);
     steamApiV2(foundSteamId, workingDir, chosenLibrary)
@@ -708,7 +711,7 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
   }
 
   //Valorant Check
-  else if (fileToScan.includes("VALORANT.exe") && workingDir.includes("VALORANT")) {
+  else if (fileToScan.includes("VALORANT.exe") && workingDir.includes("VALORANT/live")) {
     console.log("Valorant Found");
     otherApiV1('valorant_riot', workingDir, chosenLibrary)
     .then(res => {
@@ -755,10 +758,36 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
     });
   }
 
+  //battle.net client
+  else if (fileToScan.includes("Battle.net.exe") && workingDir.includes("Battle.net")) {
+    try {
+      settings.setSync('battle_net_client', {
+        set: true,
+        loc: workingDir
+      });
+      console.log("Successfully Saved Battle.net Client");
+    } catch(err) {
+      gameNotifManager("err", "Error saving Battle.net Client: "+err);
+    }
+  }
+
+  //riot client
+  else if (fileToScan.includes("RiotClientServices.exe") && workingDir.includes("Riot Client")) {
+    try {
+      settings.setSync('riot_client', {
+        set: true,
+        loc: workingDir
+      });
+      console.log("Successfully Saved Battle.net Client");
+    } catch(err) {
+      gameNotifManager("err", "Error Saving Riot Client: "+err);
+    }
+  }
+
 }
 
 function steamApiV2(applicationID, loc, chosenLibrary) {
-  console.log("SteamApiV2 Accessed");
+  //console.log("SteamApiV2 Accessed");
   return new Promise(function(resolve, reject) {
     //firstly to make the API request for game data
     try {
@@ -808,8 +837,10 @@ function steamApiV2(applicationID, loc, chosenLibrary) {
             reject("Error: Saving Settings: "+err);
           }
         } else {
+          //there needs to be a check to see if the file scanned
+          //is a tool or game. For now we may just disable to popup
           console.log("Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
-          gameNotifManager("err", "Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
+          //gameNotifManager("err", "Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
           reject("Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
         }
       });
@@ -909,9 +940,17 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
                     if (FingerPrintDB.games[y].launch.method == "command_line:original") {
                       tempLaunchDec = 'start "'+loc+'" '+FingerPrintDB.games[y].launch.cmd;
                     } else if (FingerPrintDB.games[y].launch.method == "command_line:battle") {
-
+                      if (settings.hasSync('battle_net_client')) {
+                        tempLaunchDec = 'start "'+settings.getSync('battle_net_client.loc')+'" '+FingerPrintDB.games[y].launch.cmd;
+                      } else {
+                        tempLaunchDec = 'false';
+                      }
                     } else if (FingerPrintDB.games[y].launch.method == "command_line:riot") {
-
+                      if (settings.hasSync('riot_client')) {
+                        tempLaunchDec = 'start "'+settings.getSync('riot_client.loc')+'" "'+FingerPrintDB.games[y].launch.cmd+'"';
+                      } else {
+                        tempLaunchDec = 'false';
+                      }
                     }
                     settings.setSync(applicationID, {
                       details: {
@@ -965,7 +1004,7 @@ function gameListManager(applicationID) {
     //which it should since its in ini
     if (settings.hasSync('game_list')) {
       var tempGameCheck = settings.getSync('game_list.list');
-      console.log("tempGameCheck: "+tempGameCheck);
+      //console.log("tempGameCheck: "+tempGameCheck);
       if ( !tempGameCheck.includes(applicationID) ) {
         //ensure that it has not already been set.
         //then backup current settings.
@@ -977,10 +1016,10 @@ function gameListManager(applicationID) {
             settings.setSync('game_list', {
               list: tempList.list+","+applicationID
             });
-            console.log("Successfully added to game_list");
+            //console.log("Successfully added to game_list");
             resolve("Successfully added "+applicationID+" to game_list");
           } catch(err) {
-            console.log("Error: Saving game_list settings: "+err);
+            //console.log("Error: Saving game_list settings: "+err);
             gameNotifManager("err", "Error: Saving Game List Settings: "+err);
             reject("Error: Saving game_list settings: "+err);
           }
@@ -990,10 +1029,10 @@ function gameListManager(applicationID) {
             settings.setSync('game_list', {
               list: applicationID+""
             });
-            console.log("Successfully added to game_list");
+            //console.log("Successfully added to game_list");
             resolve("Successfully added "+applicationID+" to game_list");
           } catch(err) {
-            console.log("Error: Saving to game_list settings: "+err);
+            //console.log("Error: Saving to game_list settings: "+err);
             gameNotifManager("err", "Error: Saving to Game List Settings: "+err);
             reject("Error: Saving game_list settings: "+err);
           }
