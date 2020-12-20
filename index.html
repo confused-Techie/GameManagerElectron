@@ -32,53 +32,21 @@
     <div class="sidebar-item">
 
     </div>
-
   </div>
 
   <div class="grid-container" id="game-container">
 
-
   </div>
 
+  <div id="alert-overlay" onclick="document.getElementById('alert-overlay').style.display='none';"></div>
 
   <script>
-  //const fs = require('fs');
-  //const root = fs.readdirSync('/');
-  //console.log(root);
-
-
   new Notification("Tabby Updated", {
     body: "The gamesList has been accessed"
   });
-
-  //var insertText;
-  //var insertText = "<br/>";
-  //var insertText = "<div class='grid-container'><div class='grid-item'><div class='card-body'>";
-  //var i;
-  //for (i=0; i < obj.games.length; i++) {
-  //  insertText += "<div class='grid-container'><div class='grid-item'><div class='card'>";
-  //  insertText += obj.games[i].title;
-  //  insertText += "</div></div></div>";
-  //}
-  //console.log("obj.Length is: "+obj.games.length);
-  //insertText += "</div></div></div>";
-  //document.getElementById('letsDoIt').innerHTML += insertText;
-
-  //this works, and will work to add games to games.js
-  //console.log("Attemtping file create");
-  //fs.readFile('filelist.txt', 'utf-8', function(err, data){
-  //  if (err) throw err;
-    //modify file here
-  //  let newValue = data.replace("']}';", "Works!"+'\n'+"']}';");
-  //  fs.writeFile('filelistAsync.txt', newValue, 'utf-8', function(err) {
-  //    if (err) throw err;
-  //    console.log('FilelistAsync complete');
-  //  });
-  //});
   </script>
   <script src="./data/SECRETS.js"></script>
   <script src="./logic.js"></script>
-
 
 </body>
 </html>

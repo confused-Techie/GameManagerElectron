@@ -67,6 +67,7 @@ function searchList() {
     }
   } catch(err) {
     console.log("Error creating search index: "+err);
+    gameNotifManager("err", err);
   }
   document.getElementById('gamesSearch').innerHTML += searchListDataToInsert;
 }
@@ -111,10 +112,12 @@ function gameLibraryVis() {
           }
         } catch(err) {
           console.log("There was an error accessing settings for: "+gameIDs[i]);
+          gameNotifManager("err", "There was an error accessing settings for: "+gameIDs[i]);
         }
       }
     } catch(err) {
       console.log("There was an error accessing Game Data");
+      gameNotifManager("err", "There was an error accessing Game Data: "+err);
     }
   } else {
     console.log("No Saved games");
@@ -155,13 +158,16 @@ function sidebarVis() {
             }
           } catch(err) {
             console.log("Error checking Library Duplication: "+err);
+            gameNotifManager("err", "Error checking Library Duplication: "+err);
           }
         } catch(err) {
           console.log("Error retreiving game details: "+err);
+          gameNotifManager("err", "Error retreiving game details: "+err);
         }
       }
     } catch(err) {
       console.log("Error Reading Game List: "+err);
+      gameNotifManager("err", "Error Reading Game List: "+err);
     }
     sidebarDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
     sidebarDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
@@ -423,9 +429,6 @@ function search() {
     console.log("Couldn't navigate to search: "+ex);
     console.log("Text: "+document.getElementById("searchTextField").value);
   }
-  //window.open("#"+document.getElementById("searchTextField").value);
-  //document.getElementById("searchTextOutput").value = document.getElementById("searchTextField").value;
-  //console.log(document.getElementById("searchTextField").value);
 }
 
 function filterSearch() {
@@ -445,6 +448,7 @@ function consoleGameLaunch(cmd) {
   })
   .catch(err => {
     console.log(err);
+    gameNotifManager("err", err);
   });
 }
 
@@ -461,6 +465,7 @@ function GameInspectorV2() {
     console.log("No Directory Selected");
     return;
   } else {
+    gameNotifManager("create", "");
     console.log("Result of Library Pick: "+folderResult[0]);
     try {
       DirInspectorV2(folderResult[0]).then(DirIResult => {
@@ -468,12 +473,14 @@ function GameInspectorV2() {
           console.log("Successfully scanned Folder");
           //save directory
         }
-      }).catch(ErrorCatch => {
-        console.log("Error Occured: "+ErrorCatch);
+      }).catch(err => {
+        console.log("Error Occured: "+err);
+        gameNotifManager("err", "Error Occured: "+err);
       });
     }
     catch(ex) {
       console.log("Unable to call DirScan: " + ex);
+      gameNotifManager("err", "Unable to initiate scan: "+ex);
     }
   }
 }
@@ -577,6 +584,7 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
     steamApiV2(foundSteamId, workingDir, chosenLibrary)
     .then(res => {
       console.log(res);
+      startFunction();
     })
     .catch(err => {
       console.log(err);
@@ -588,6 +596,7 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
     fs.readFile(workingDir, 'utf8', function (err, data) {
       if (err) {
         console.log("Error occured reading file: "+err);
+        gameNotifManager("err", "Error occured reading file: "+err);
       }
       let res = JSON.parse(data);
       console.log("Epic Game: "+res.AppName);
@@ -651,7 +660,7 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
       console.log(res);
     })
     .catch(err => {
-      console.log(err)
+      console.log(err);
     });
   }
 
@@ -710,12 +719,15 @@ function steamApiV2(applicationID, loc, chosenLibrary) {
                 gameListManager(applicationID).then(gameListRes => {
                   resolve("Successfully Saved SteamAPI Settings: "+res[applicationID].data.name);
                 }).catch(gameListerr => {
+                  gameNotifManager("err", "Generic Error on Game List Save: "+gameListerr);
                   reject("Generic Error on game_list save: "+gameListerr);
                 });
 
               } catch(err) {
                 console.log("Error saving Steam API Settings for: "+res[applicationID].data.name+":: Error: "+err);
+                gameNotifManager("err", "Error saving Steam API Settings for: "+res[applicationID].data.name+":: Error: "+err);
                 reject("Error saving Steam API Settings for: "+res[applicationID].data.name+":: Error: "+err);
+
               }
 
             } else {
@@ -725,15 +737,18 @@ function steamApiV2(applicationID, loc, chosenLibrary) {
             //resolve("Successfully Saved SteamAPi Settings: "+res[applicationID].data.name);
           } catch(err) {
             console.log("Error: Saving Settings: "+err);
+            gameNotifManager("err", "Error: Saving Settings: "+err);
             reject("Error: Saving Settings: "+err);
           }
         } else {
           console.log("Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
+          gameNotifManager("err", "Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
           reject("Error: Reaching Steam API Server: "+res.status+"::"+res.statusText);
         }
       });
     } catch(err) {
       console.log("Steam API Error: "+err);
+      gameNotifManager("err", "Steam API Error: "+err);
       reject("Steam API Error: "+err);
     }
   });
@@ -745,6 +760,7 @@ function epicApiV2(applicationID, loc, chosenLibrary) {
     try {
       fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
         if (err) {
+          gameNotifManager("err", "Error occured reading Database: "+err);
           reject("Error occured reading Database: "+err);
         }
         let FingerPrintDB = JSON.parse(data);
@@ -774,10 +790,12 @@ function epicApiV2(applicationID, loc, chosenLibrary) {
                     gameListManager(applicationID).then(gameListRes => {
                       resolve("Successfully Saved Epic API Settings: "+FingerPrintDB.games[y].name);
                     }).catch(gameListerr => {
+                      gameNotifManager("err", "Generic Error on Game List Save: "+gameListerr);
                       reject("Generic Error on game_list save: "+gameListerr);
                     });
                   } catch(err) {
                     console.log("Error saving Epic Games API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
+                    gameNotifManager("err", "Error saving Epic Games API Settings for: "+FingerPrintDB.games[y].name+":: Error: "+err);
                     reject("Error saving Epic Games API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
                   }
                   //resolve("Successfully Saved EpicApi Settings for: "+applicationID);
@@ -785,6 +803,7 @@ function epicApiV2(applicationID, loc, chosenLibrary) {
                   reject("Already Saved This Epic ID: "+applicationID);
                 }
               } catch(ex) {
+                gameNotifManager("err", "Error: Saving Settings: "+ex);
                 reject("Error: Saving Settings: "+ex);
               }
             }
@@ -792,6 +811,7 @@ function epicApiV2(applicationID, loc, chosenLibrary) {
         }
       })
     } catch(err) {
+      gameNotifManager("err", "Error occured reading Fingerprint Database: "+err);
       reject("Error occured reading Fingerprint Database: "+err);
     }
   });
@@ -805,6 +825,7 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
     try {
       fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
         if (err) {
+          gameNotifManager("err", "Error occured reading Database: "+err);
           reject("Error occured reading Database: "+err);
         }
         let FingerPrintDB = JSON.parse(data);
@@ -841,10 +862,12 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
                     gameListManager(applicationID).then(gameListRes => {
                       resolve("Successfully Saved Other API Settings: "+FingerPrintDB.games[y].name);
                     }).catch(gameListerr => {
+                      gameNotifManager("err", "Generic Error on Game List Save: "+gameListerr);
                       reject("Generic Error on game_list save: "+gameListerr);
                     })
                   } catch(err) {
                     console.log("Error saving Other API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
+                    gameNotifManager("err", "Error saving Other API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
                     reject("Error saving Other API settings for "+FingerPrintDB.games[y].name+":: Error: "+err);
                   }
                   resolve("Successfully Saved This Game ID: "+applicationID + "/"+FingerPrintDB.games[y].name);
@@ -852,6 +875,7 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
                   reject("Already Saved This Game ID: "+applicationID +"/"+FingerPrintDB.games[y].name);
                 }
               } catch(err) {
+                gameNotifManager("err", "Error Checking Saved Status: "+err);
                 reject("Error Checking Saved Status: "+err);
               }
             }
@@ -859,6 +883,7 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
         }
       });
     } catch(err) {
+      gameNotifManager("err", "Error: During Reading Database: "+err);
       reject("Error: During Reading Database: "+err);
     }
   });
@@ -889,6 +914,7 @@ function gameListManager(applicationID) {
             resolve("Successfully added "+applicationID+" to game_list");
           } catch(err) {
             console.log("Error: Saving game_list settings: "+err);
+            gameNotifManager("err", "Error: Saving Game List Settings: "+err);
             reject("Error: Saving game_list settings: "+err);
           }
         } else {
@@ -901,6 +927,7 @@ function gameListManager(applicationID) {
             resolve("Successfully added "+applicationID+" to game_list");
           } catch(err) {
             console.log("Error: Saving to game_list settings: "+err);
+            gameNotifManager("err", "Error: Saving to Game List Settings: "+err);
             reject("Error: Saving game_list settings: "+err);
           }
         }
@@ -918,9 +945,27 @@ function gameListManager(applicationID) {
       }
     } else {
       console.log("Error: game_list not set.");
+      gameNotifManager("err", "Error: Game List is not set.");
       reject("Error: game_list not set.");
     }
   });
+}
+
+function gameNotifManager(type, content) {
+  console.log("GameNotifManager accessed");
+  if (type == "create") {
+    //this means the gameNotif is being called to create
+    //a notification that games are being scanned.
+    document.getElementById('alert-overlay').style.backgroundColor = "#66edff";
+    document.getElementById('alert-overlay').style.color = "black";
+    document.getElementById('alert-overlay').innerText = "Looking for your games";
+    document.getElementById('alert-overlay').style.display = "block";
+  } else if (type == "err") {
+    document.getElementById('alert-overlay').style.backgroundColor = "#700f0f";
+    document.getElementById('alert-overlay').style.color = "black";
+    document.getElementById('alert-overlay').innerText = content;
+    document.getElementById('alert-overlay').style.display = "block";
+  }
 }
 
 function OLDaddLibrary() {

@@ -173,3 +173,26 @@ dd * {
 .dropdown {
   position: relative;
 }
+
+#alert-overlay {
+  position: fixed; /*Sit on top of page */
+  display: none; /* Hidden by default none || block*/
+  width: 40%;
+  height: 10%;
+  right: -100%; /* 10px */
+  bottom: 10px;
+  background-color: #383838;
+  border-radius: 20px;
+  z-index: 2;
+  cursor: pointer;
+  padding: 10px;
+  text-align: center;
+  font-size: 15px;
+  /* Animation below */
+
+  animation: slide 0.5s forwards;
+}
+
+@keyframes slide {
+  100% { right: 10px; }
+}
