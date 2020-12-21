@@ -19,6 +19,7 @@ function (event) {
   }
 });
 
+var FingerPrintDBTEST = "";
 
 
 //This is the startup function, loading needed elements
@@ -26,7 +27,21 @@ function startFunction() {
   initSettings();
   sidebarVis();
   gameLibraryVis();
-
+  try {
+    if (FingerPrintDBTEST == "") {
+      fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
+        if (err) {
+          console.log("Error occured reading Database: "+err);
+          gameNotifManager("err", "Error occured reading Database: "+err);
+        }
+        FingerPrintDBTEST = JSON.parse(data);
+        console.log("Successfully created Var FingerPrintDBTEST");
+      });
+    }
+  } catch(err) {
+    console.log("Unable to Initialize Database for Full Scan.");
+    gameNotifManager("err", "Unable to Initialize Database for Full Scan");
+  }
   //this is for loading the searchList
   searchList();
   //gameUpdateCheck();
@@ -143,7 +158,7 @@ function gameLibraryVis() {
     console.log("No Saved games");
     displayData += "<div class='grid-item' id='no-data'><div class='card'><div class='card-body'><div class='card-title'>";
     displayData += "Looks like you haven't added any Games yet";
-    displayData += "</div><p class='card-text'>To add some games just click the folder icon on the left! Or read more about it here.</p>";
+    displayData += "</div><p class='card-text'>To add some games just click the folder icon on the left! Or read more about it here. Also it's recommended to add you C Drive First</p>";
     displayData += "<div class='card-footer text-muted'>";
     displayData += "</div></div></div></div>";
   }
@@ -699,10 +714,6 @@ function DirInspectorV2(startDir) {
 }
 
 function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
-  //sanity checks
-  //console.log("Provided File: "+fileToScan);
-  //console.log("Provided Directory: "+workingDir);
-
   //now to check the passed files and directories for game data
 
   //in all of these there need to be checks to ensure no duplicates are saved
@@ -739,84 +750,6 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
     });
   }
 
-  //Minecraft Java Check
-  else if (fileToScan == "MinecraftLauncher.exe" && workingDir.includes("Minecraft Launcher")) {
-    console.log("Minecraft Java Edition Found");
-    //tesst by scanning Program Files (x86)
-    otherApiV1('minecraft_java', workingDir, chosenLibrary)
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log(err);
-    });
-  }
-
-  //CoD Black Ops Cold War Check
-  else if (fileToScan.includes("BlackOpsColdWar") && workingDir.includes("Call of Duty Black Ops Cold War")) {
-    console.log("Call of Duty Black Ops Cold War Found");
-    otherApiV1('CoD_bocw', workingDir, chosenLibrary)
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log(err);
-    });
-  }
-
-  //CoD Modern Warfare Check
-  else if (fileToScan.includes("Modern Warfare Launcher.exe") && workingDir.includes("Call of Duty Modern Warfare")) {
-    console.log("Call of Duty Modern Warfare Found");
-  }
-
-  //Valorant Check
-  else if (fileToScan.includes("VALORANT.exe") && workingDir.includes("VALORANT/live")) {
-    console.log("Valorant Found");
-    otherApiV1('valorant_riot', workingDir, chosenLibrary)
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log(err);
-    });
-  }
-
-  //League of Legends Check
-  else if (fileToScan.includes("LeagueClient.exe") && workingDir.includes("League of Legends")) {
-    console.log("League of Legends Found");
-    otherApiV1('league_legends_riot', workingDir, chosenLibrary)
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log(err);
-    });
-  }
-
-  //Final Fantasy XIV - A Realm Reborn Check
-  else if (fileToScan.includes("ffxivboot.exe") && workingDir.includes("SquareEnix")) {
-    console.log("Final Fantasy XIV - A Realm Reborn Found");
-    otherApiV1('ffXIVaRR', workingDir, chosenLibrary)
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log(err);
-    });
-  }
-
-  //Sims 4 - Origin
-  else if (fileToScan.includes("TS4_x64.exe") && workingDir.includes("The Sims 4") && workingDir.includes("Game")) {
-    console.log("The Sims 4 Found");
-    otherApiV1('sims4_origin', workingDir, chosenLibrary)
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log(err);
-    });
-  }
-
   //battle.net client
   else if (fileToScan.includes("Battle.net.exe") && workingDir.includes("Battle.net")) {
     try {
@@ -840,6 +773,29 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
       console.log("Successfully Saved Battle.net Client");
     } catch(err) {
       gameNotifManager("err", "Error Saving Riot Client: "+err);
+    }
+  }
+
+  //full DB check
+  else {
+    try {
+        for (y in FingerPrintDBTEST.games) {
+          if (FingerPrintDBTEST.games[y].search_method != "epic_games") {
+            if (fileToScan.includes(FingerPrintDBTEST.games[y].detect.file) && workingDir.includes(FingerPrintDBTEST.games[y].detect.dir)) {
+              console.log(FingerPrintDBTEST.games[y].name+" Found in Full Check");
+              otherApiV1(FingerPrintDBTEST.games[y].unique_id, workingDir, chosenLibrary)
+              .then(res => {
+                console.log(res);
+              })
+              .catch(err => {
+                console.log(err);
+              });
+            }
+          }
+        }
+    } catch(err) {
+      console.log("Error reading Database: "+err);
+      gameNotifManager("err", "Error reading Database: "+err);
     }
   }
 

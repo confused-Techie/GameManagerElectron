@@ -4,6 +4,10 @@
       "name": "The Sims 4",
       "search_method": "origin",
       "unique_id": "sims4_origin",
+      "detect": {
+        "file": "TS4_x64.exe",
+        "dir": "The Sims 4/Game/"
+      },
       "launch": {
         "method": "command_line:original",
         "cmd": ""
@@ -17,6 +21,10 @@
       "name": "Final Fantasy XIV - A Realm Reborn",
       "search_method": "square_enix",
       "unique_id": "ffXIVaRR",
+      "detect": {
+        "file": "ffxivboot.exe",
+        "dir": "SquareEnix"
+      },
       "launch": {
         "method": "command_line:original",
         "cmd": ""
@@ -30,6 +38,10 @@
       "name": "League of Legends",
       "search_method": "riot_games",
       "unique_id": "league_legends_riot",
+      "detect": {
+        "file": "LeagueClient.exe",
+        "dir": "League of Legends"
+      },
       "launch": {
         "method": "command_line:original",
         "cmd": ""
@@ -43,6 +55,10 @@
       "name": "Minecraft Java Edition",
       "search_method": "mojang",
       "unique_id": "minecraft_java",
+      "detect": {
+        "file": "MinecraftLauncher.exe",
+        "dir": "Minecraft Launcher"
+      },
       "launch": {
         "method": "command_line:original",
         "cmd": ""
@@ -56,6 +72,10 @@
       "name": "Valorant",
       "search_method": "riot_games",
       "unique_id": "valorant_riot",
+      "detect": {
+        "file": "VALORANT.exe",
+        "dir": "VALORANT/live"
+      },
       "launch": {
         "method": "command_line:riot",
         "cmd": "--launch-product=valorant --launch-patchline=live"
@@ -69,6 +89,10 @@
       "name": "Call of Duty: Black Ops Cold War",
       "search_method": "battle.net",
       "unique_id": "CoD_bocw",
+      "detect": {
+        "file": "BlackOpsColdWar",
+        "dir": "Call of Duty Black Ops Cold War"
+      },
       "launch": {
         "method": "command_line:battle",
         "cmd": "--game=zeus"
@@ -82,9 +106,13 @@
       "name": "Call of Duty: Modern Warfare",
       "search_method": "battle.net",
       "unique_id": "CoD_mw",
+      "detect": {
+        "file": "Modern Warfare Launcher.exe",
+        "dir": "Call of Duty Modern Warfare"
+      },
       "launch": {
         "method": "command_line:battle",
-        "cmd": ""
+        "cmd": "--game=odin"
       },
       "meta_data": {
         "img": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e9/CallofDutyModernWarfare%282019%29.jpg/220px-CallofDutyModernWarfare%282019%29.jpg",
@@ -128,6 +156,23 @@
       "meta_data": {
         "img": "https://www.nintendo.com/content/dam/noa/en_US/games/switch/r/rogue-company-switch/rogue-company-switch-hero.jpg",
         "description": "The world needs saving and only the best of the best can do it. Suit up as one of the elite agents of Rogue Company and go to war in a variety of different game modes. Gear up and go Rogue! Download and play FREE now!"
+      }
+    },
+    {
+      "name": "Need for Speed Hot Pursuit",
+      "search_method": "generic",
+      "unique_id": "need_for_speed_hot_pursuit",
+      "detect": {
+        "file": "NFS11.exe",
+        "dir": ""
+      },
+      "launch": {
+        "method": "command_line:original",
+        "cmd": ""
+      },
+      "meta_data": {
+        "img": "https://steamcdn-a.akamaihd.net/steam/apps/47870/header.jpg?t=1605201270",
+        "description": "Need for Speed Hot Pursuit launches you into a new open-world landscape behind the wheel of the world's fastest and most beautiful cars. From Criterion, the award-winning studio behind the Burnout series, Hot Pursuit will redefine racing games for a whole new generation."
       }
     }
 
