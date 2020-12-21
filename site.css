@@ -196,3 +196,20 @@ dd * {
 @keyframes slide {
   100% { right: 10px; }
 }
+
+#settings-page {
+  position: fixed;
+  display: none;
+  width: 90%;
+  height: 80%;
+  top: -100%;
+  left: 5%;
+  background-color: #383838;
+  z-index: 2;
+
+  animation: setting-slide 0.5s forwards;
+}
+
+@keyframes setting-slide {
+  100% { top: 10% }
+}

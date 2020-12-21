@@ -15,6 +15,7 @@
   <div class="topbar">
     <input type="text" list="gamesSearch" id="searchTextField" placeholder="Search by Title...">
     <img id="searchIcon" src="./data/images/search.svg" style="width:30px;" onclick="search()">
+    <img id="settingIcon" src='./data/images/settings.svg' onclick='settingsVis()' style="width: 30px;margin-right: 20px;margin-top: 10px;float:right;cursor:pointer;">
     <datalist id="gamesSearch">
 
     </datalist>
@@ -39,7 +40,10 @@
   </div>
 
   <div id="alert-overlay" onclick="document.getElementById('alert-overlay').style.display='none';"></div>
-
+  <div id="settings-page">
+    <img src="./data/images/minus-circle.svg" onclick="document.getElementById('settings-page').style.display = 'none'" style="float:right;cursor:pointer;background-color:#383838;">
+    
+  </div>
   <script>
   //new Notification("Tabby Updated", {
   //  body: "The gamesList has been accessed"

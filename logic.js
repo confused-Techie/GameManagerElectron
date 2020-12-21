@@ -33,6 +33,7 @@ function startFunction() {
   // While this could be called right away, in testing it added nearly 70~100ms to
   //first load the page. Will have it run in the background, after load
   setTimeout(gameUpdateCheck, 2000);
+  setTimeout(newGameScan, 5000);
 }
 
 function initSettings() {
@@ -53,6 +54,12 @@ function initSettings() {
 
   if (!settings.hasSync('last_game_scan')) {
     settings.setSync('last_game_scan', {
+      time: 0
+    });
+  }
+
+  if (!settings.hasSync('last_game_search')) {
+    settings.setSync('last_game_search', {
       time: 0
     });
   }
@@ -80,6 +87,10 @@ function searchList() {
     gameNotifManager("err", err);
   }
   document.getElementById('gamesSearch').innerHTML += searchListDataToInsert;
+}
+
+function settingsVis() {
+  document.getElementById('settings-page').style.display = "block";
 }
 
 function gameLibraryVis() {
@@ -214,6 +225,54 @@ function sidebarVis() {
   //  document.getElementById('sidebar-container').innerHTML += "<div onclick='linkDiscord()'>Link your Discord!</div>";
   //}
 
+}
+
+function newGameScan() {
+  //used to find out if within the provided libraries there are new games
+  if (settings.hasSync('last_game_search')) {
+    //this will use the same last game scan and check every four hours.
+    var currentTimeCheck = new Date();
+    if (currentTimeCheck.getTime() - settings.getSync('last_game_search.time') > 14400000) {
+      console.log("Starting New game check.");
+      if (settings.hasSync('game_list') && settings.getSync('game_list.list') != "") {
+        try {
+          let gameIDs = (settings.getSync('game_list.list')).split(",");
+          const libraryList = [];
+          for (let i = 0; i < gameIDs.length; i++) {
+            try {
+              game_item = settings.getSync(gameIDs[i]);
+              try {
+                if (libraryList.indexOf(game_item.details.library) == -1) {
+                  libraryList.push(game_item.details.library);
+                  //then actually check the library
+                  DirInspectorV2(game_item.details.library);
+                }
+              } catch(err) {
+                console.log("Error checking Library Duplication: "+err);
+              }
+            } catch(err) {
+              console.log("Error retreiving game details: "+err);
+            }
+          }
+          var currentTimeSave = new Date();
+          settings.setSync('last_game_search', {
+            time: currentTimeSave.getTime()
+          });
+        } catch(err) {
+          //error during game id scan
+          console.log("Error Checking game list: "+err);
+          gameNotifManager("err", "Error checking game list: "+err);
+        }
+      }
+    } else {
+      //not time to update
+      console.log("Game Library was scanned less than 4 hours ago");
+    }
+  } else {
+    //last game scan doesn't exist
+    console.log("Error: Last Game Scan doesn't exist");
+    gameNotifManager("err", "Error: Last Game Scan doesn't exist");
+  }
 }
 
 function gameUpdateCheck() {
