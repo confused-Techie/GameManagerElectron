@@ -213,3 +213,18 @@ dd * {
 @keyframes setting-slide {
   100% { top: 10% }
 }
+
+#settings-main-page {
+  margin-left: 10%;
+  margin-top: 5%;
+  background-color: #383838;
+
+}
+
+#settings-main-page label {
+  background-color: #383838;
+}
+
+#settings-main-page h4 {
+  background-color: #383838;
+}

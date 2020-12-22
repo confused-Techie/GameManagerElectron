@@ -79,6 +79,12 @@ function initSettings() {
     });
   }
 
+  if (!settings.hasSync('recently_played')) {
+    settings.setSync('recently_played', {
+      list: ""
+    });
+  }
+
 }
 
 function searchList() {
@@ -105,7 +111,69 @@ function searchList() {
 }
 
 function settingsVis() {
+  var settingsToInsert = "";
+  const librariesToInsert = [];
+  document.getElementById('settings-main-page').innerHTML = ""; //clear any data there currntly
+  if (settings.hasSync('game_list') && settings.getSync('game_list.list') != "") {
+    settingsToInsert += "<h4>Libraries</h4>";
+    let gameIDs = (settings.getSync('game_list.list')).split(",");
+    for (let i = 0; i < gameIDs.length; i++) {
+      game_item = settings.getSync(gameIDs[i]);
+      if (librariesToInsert.indexOf(game_item.details.library) == -1) {
+        librariesToInsert.push(game_item.details.library);
+        settingsToInsert += "<input type='checkbox' class='form-check-input' id='"+game_item.details.library+"' style='margin-left:10px;'><label class='form-check-label' for='"+game_item.details.library+"' style='margin-left:30px;'>"+game_item.details.library+"</label><br/>";
+      }
+    }
+    settingsToInsert += "<button type='submit' class='btn btn-primary' onclick='deleteFolderCheck("+JSON.stringify(librariesToInsert)+")'>Delete</button>";
+  }
+  document.getElementById('settings-main-page').innerHTML += settingsToInsert;
   document.getElementById('settings-page').style.display = "block";
+}
+
+function deleteFolderCheck(libraryCheck) {
+  //libraryCheck should be an array of all libraries, which we can then check weather they are checked or not
+  try {
+    for (let i = 0; i < libraryCheck.length; i++) {
+      if (document.getElementById(libraryCheck[i]).checked) {
+        try {
+          gameIDs = (settings.getSync('game_list.list')).split(",");
+          for (let y = 0; y < gameIDs.length; y++) {
+            var game_item = settings.getSync(gameIDs[y]);
+            if (libraryCheck[i] == game_item.details.library) {
+              console.log("Removing "+game_item.details.name+" from Games");
+              try {
+                settings.unsetSync(game_item.details.appid);  //refer to gameUpdateCheck for logic
+                let game_item_pos = gameIDs.indexOf(game_item.details.appid);
+                let post_removed_item = gameIDs.splice(game_item_pos, 1);
+                try {
+                  settings.setSync('game_list', {
+                    list: gameIDs+""
+                  });
+                  console.log("Successfully removed from Game List");
+                  //it seems there may be a bug where not all games with this library are deleted on the first try
+                } catch(err) {
+                  console.log("Error Removing game from Game List: "+err);
+                  gameNotifManager("err", "Error Removing game from Game List: "+err);
+                }
+              } catch(err) {
+                console.log("Error Removing Game Data: "+err);
+                gameNotifManager("err", "Error Removing Game Data: "+err);
+              }
+            }
+          }
+        } catch(err) {
+          console.log("Error reading Game List: "+err);
+          gameNotifManager("err", "Error reading Game List: "+err);
+        }
+      }
+    }
+  } catch(err) {
+    console.log("Error checking Library Array: "+err);
+    gameNotifManager("err", "Error checking Library Array: "+err);
+  }
+  //hopefully will execute once everything is done.
+  document.getElementById('settings-page').style.display = 'none';
+  startFunction();
 }
 
 function gameLibraryVis() {
@@ -130,9 +198,9 @@ function gameLibraryVis() {
           //now to check how to launch the game itself
           if (game_item.details.launch_type == "uri") {
             //the uri is simply a normal link on the play button.
-            insertLaunch = "<a href='"+game_item.details.launch_cmd+"''><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
+            insertLaunch = "<a href='"+game_item.details.launch_cmd+"'' onclick=gameLaunchManager('"+insertIdentity+"')><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>";
           } else if (game_item.details.launch_type == "cmd") {
-            insertLaunch = `<a href='#' onclick='consoleGameLaunch(${JSON.stringify(game_item.details.launch_cmd)})'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>`;
+            insertLaunch = `<a href='#' onclick='gameLaunchManager(${JSON.stringify(insertIdentity)});consoleGameLaunch(${JSON.stringify(game_item.details.launch_cmd)})'><img src='./data/images/play.svg' style='float:right;background-color:#212121;'></a>`;
           }
 
           if (insertLaunch != "") {
@@ -205,14 +273,40 @@ function sidebarVis() {
       gameNotifManager("err", "Error Reading Game List: "+err);
     }
     sidebarDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
-    sidebarDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
-    sidebarDataToInsert += "</dl></div>";
+    sidebarDataToInsert += "<a href='#' onclick='settingsVis()'><img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></a></dd>";
+    sidebarDataToInsert += "</dl></div></div>";
   } else {
     console.log("No Saved libraries");
     sidebarDataToInsert += "<div class='sidebar-item'><div><dl><dt>Libraries</dt><hr>";
     sidebarDataToInsert += "<dd><a href='#' onclick='GameInspectorV2()'><img src='./data/images/folder-plus.svg' style='width:20px;'></a>";
-    sidebarDataToInsert += "<img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></dd>";
-    sidebarDataToInsert += "</dl></div>";
+    sidebarDataToInsert += "<a href='#' onclick='settingsVis()'><img src='./data/images/folder-minus.svg' style='width:20px;margin-left:10px;'></a></dd>";
+    sidebarDataToInsert += "</dl></div></div>";
+  }
+
+  //time for full game amount
+  if (settings.hasSync('game_list') && settings.getSync('game_list.list') != "") {
+    let gameIDs = (settings.getSync('game_list.list')).split(",");
+    sidebarDataToInsert += "<div class='sidebar-item'><div><dl><dt>Games</dt><hr>";
+    sidebarDataToInsert += "<dd>"+parseInt(gameIDs.length)+" Games</dd>";
+    sidebarDataToInsert += "</dl></div></div>";
+  }
+
+  //time for recently played games.
+  if (settings.hasSync('recently_played') && settings.getSync('recently_played.list') != "") {
+    sidebarDataToInsert += "<div class='sidebar-item'><div><dl><dt>Recently Played</dt><hr>";
+    let gameList = (settings.getSync('recently_played.list')).split(",");
+    for (let i = 0; i < gameList.length-1; i++) {
+      try {
+        if (typeof gameList[i] != 'undefined' || gameList[i] != "" || typeof gameList[i] != 'null') {
+          let game_item = settings.getSync(gameList[i]);
+          sidebarDataToInsert += "<a href='#"+game_item.details.appid+"'><dd>"+game_item.details.name+"</dd></a>";
+        }
+      } catch(err) {
+        console.log("Error: Unable to retreive Game Settings: "+err+" Of "+gameList[i]);
+        gameNotifManager("err", "Unable to Retrieve Game Settings: "+err);
+      }
+    }
+    sidebarDataToInsert += "</dl></div></div>";
   }
 
   document.getElementById('sidebar-container').innerHTML = sidebarDataToInsert;
@@ -1093,356 +1187,37 @@ function gameNotifManager(type, content) {
   }
 }
 
-function OLDaddLibrary() {
-
-  result = dialog.showOpenDialogSync({
-    title: "Add Game Library",
-    buttonLabel: "Add Library",
-    properties: ['openDirectory', "dontAddToRecent"]
-  });
-  if (result === undefined) {
-    console.log("No Directory Selected");
-    return;
-  } else {
-    console.log("Result of Library Pick: "+ result[0]);
-    //await scanForGames(result[0]);
-    //console.log("Result of Test Provider Check: " + detectProvider(result[0]));
-    //check providers
-    var providerDetected = detectProvider(result[0]);
-    console.log("Detected Provider: "+providerDetected);
-    if (providerDetected == "Steam") {
-      //now we need the AppID
-      var steamAppIDCollection = collectSteamIds(result[0]);
-      console.log("Received Apps: "+steamAppIDCollection);
-
-      //save the known Libraries
-      if (settings.hasSync('SavedLibraries')) {
-        console.log("Saved Library Settings, do exist. Adding...");
-        var previousSavedLibraries = settings.getSync('SavedLibraries');
-        settings.setSync('SavedLibraries', {
-          fullList: previousSavedLibraries.fullList+","+result[0],
-        });
-        settings.setSync(result[0], {
-          Ids: steamAppIDCollection+""
-        });
-      } else {
-        console.log("Saved Library settings, does not exist.");
-        settings.setSync('SavedLibraries', {
-          fullList: result[0],
-        });
-        settings.setSync(result[0], {
-          Ids: steamAppIDCollection+""
-        });
-      }
-      //now loop through API's and save them.
-      var q;
-      for (q = 0; q < steamAppIDCollection.length; q++) {
-        steamApi(steamAppIDCollection[q]);
-
-      }
-      //after they are all saved, then save a var to store all app Ids.
-      if (settings.hasSync('SteamAppId')) {
-        console.log("SteamAppID already exists, adding to List...");
-        var previousSteamAppId = settings.getSync('SteamAppId.list');
-        settings.setSync('SteamAppId', {
-          list: previousSteamAppId + ","+ steamAppIDCollection
-        });
-      } else {
-        console.log("Settings do not exist. Creating Settings...");
-        settings.setSync('SteamAppId', {
-          //set to save the steamID list seperated by commas
-          //adding the empty string ensures this isn't saved as an Array, so that only one parser has to be made
-          list: steamAppIDCollection+""
-        });
-      }
-
-      //now that ideally the whole library has been uploaded, time to reload
-      //location.reload(); //Calling here interrupts the other functions
-
-    }
-    else if (providerDetected == "Epic_Games") {
-      if (settings.hasSync('SavedLibraries')) {
-        console.log("Saved Library Settings do exist. Adding...");
-        var previousSavedLibraries = settings.getSync('SavedLibraries');
-        settings.setSync('SavedLibraries', {
-          fullList: previousSavedLibraries.fullList+","+result[0],
-        });
-        collectEpicIds(result[0]).then(epicAppIDCollection => {
-          settings.setSync(result[0], {
-            Ids: epicAppIDCollection+""
-          });
-          epic_gamesApi(epicAppIDCollection).then(epic_gamesApi_Res => {
-            //this is where a refresh should happen, or really once the api requests are all done
-            if (epic_gamesApi_Res == 'true') {
-              gameLibraryVis();
-            }
-          });
-        });
-      } else {
-        //no saved library settings
-        console.log("Saved Library Settings does not exists. Creating...");
-        settings.setSync('SavedLibraries', {
-          fullList: result[0],
-        });
-        collectEpicIds(result[0]).then(epicAppIDCollection => {
-          console.log("IDs returned: "+epicAppIdCollection);
-          settings.setSync(result[0], {
-            Ids: epicAppIDCollection+""
-          });
-
-          epic_gamesApi(epicAppIdCollection).then(epic_gamesApi_Res => {
-            //this is where a refresh should happen, or really once the api requests are all done.
-            if (epic_gamesApi_Res == 'true') {
-              //since I know all games have been saved fully and this will return while all async is done, I can call library vis
-              gameLibraryVis();
-            }
-          });
-        });
-      }
-
-    }
-    else if (providerDetected == "None") {
-      console.log("No Supported Provider Found");
-    }
-    //await settings.set('test', {
-    //  location: result[0]
-    //});
-    //console.log(await settings.get('test.location'));
-  }
-}
-
-function OLDdetectProvider(directory) {
-  const fs = require('fs');
-  const root = fs.readdirSync(directory);
-  console.log("Root Directory detected: "+root);
-  var i;
-  for (i=0; i < root.length; i++) {
-    console.log("Dir being scanned: " +root[i]);
-    if (root[i] == "steamapps") {
-      //loops thorugh everything in the root of the provided dir
-      //and if it matches steam to return that
-      return "Steam";
-      break;
-    }
-    else {
-      //executes if the root directory doesn't match any known providers.
-      const twoRoot = fs.readdirSync(directory+"/"+root[i]);
-      console.log("Detected Folders: "+twoRoot);
-      for (let y=0;y<twoRoot.length;y++) {
-        if (twoRoot[y] == ".egstore") {
-          console.log("Epic games Game Folder Detected");
-          return "Epic_Games";
-          break;
-        }
-        else if (twoRoot[y] == "Minecraft Launcher") {  //default name for the minecraft java folder
-
-        }
-      }
-    }
-  }
-
-  console.log("No supported Library detected...");
-  return "None";
-}
-
-function OLDcollectSteamIds(directory) {
-  const fs = require('fs');
-  const root = fs.readdirSync(directory);
-  var steamRoot;
-  var tempAppId = new Array();
-
-  var i;
-  for (i = 0; i < root.length; i++) {
-    if (root[i] == "steamapps") {
-      steamRoot = fs.readdirSync(directory+"\\"+root[i]);
-
-    }
-  }
-
-  var y;
-  for (y=0; y<steamRoot.length; y++) {
-    if (steamRoot[y].includes("acf")) {
-      tempAppId.push(steamRoot[y].replace(/\D/g, ''));
-      console.log("Found Game: "+tempAppId[y]);
-    }
-  }
-  console.log("tempAppId within collectSteamIds: " + tempAppId);
-  return tempAppId;
-  //this should return an array of App Ids
-}
-
-function OLDcollectEpicIds(directory) {
-  return new Promise(function(resolve, reject) {
-    const root = fs.readdirSync(directory);
-    var epicParentDir = new Array();
-    var epicTempId = new Array();
-    var amountOfGames = 100;  //this will be used to ensure all games are added before resolve()
-    //setting amount of games so high, ensures it doesn't resolve right away with a value of 0
-    var gameSavedCheck = new Array(); //again used to ensure all games are added before resolve()
-
-    for (let x=0; x<root.length;x++) {
-      epicParentDir.push(directory+"/"+root[x]);
-      console.log(epicParentDir[x]);
-      amountOfGames = epicParentDir.length; //this will set the amount of games to how many have been added,
-                                            //which once done will be the total amount of games
-    }
-    for (let y=0; y<epicParentDir.length; y++) {
-      const tempDirScan = fs.readdirSync(epicParentDir[y]);
-      for (let u=0; u<tempDirScan.length;u++) {
-        if (tempDirScan[u] == ".egstore") {
-          const egstoreScan = fs.readdirSync(epicParentDir[y]+"/"+tempDirScan[u]);
-          for (let q=0;q<egstoreScan.length;q++) {
-            if (egstoreScan[q].includes("mancpn")) {
-              //this would mean one of the mancpn files have been found.
-              console.log("Mancpn file found: "+egstoreScan[q]);
-              fs.readFile(epicParentDir[y]+"/"+tempDirScan[u]+"/"+egstoreScan[q], 'utf8', function (err, data) {
-                if (err) {
-                  console.log("Error occured reading file: "+err);
-                  reject();
-                }
-                let res = JSON.parse(data);
-                console.log("Unique Id Found: "+res.AppName);
-                epicTempId.push(res.AppName);
-                gameSavedCheck.push('true');  //shows a completed save of game
-                console.log("Game Saved Check: "+gameSavedCheck.length+" :: Amount OF Games: "+amountOfGames);
-                if (amountOfGames == gameSavedCheck.length) {
-                  console.log("Resolving with: "+epicTempId);
-                  resolve(epicTempId);
-                }
-              });
-            }
-          }
-        }
-      }
-    }
-    if (amountOfGames == gameSavedCheck.length) {
-      console.log("Resolving with: "+epicTempId);
-      resolve(epicTempId);
-      //for some unknown reason this is never returned after adding if, so return added in for with same checks.
-    }
-
-  });
-}
-
-function OLDsteamApi(applicationid) {
-  console.log("Provided ID: " + applicationid);
-
- const request = net.request('http://store.steampowered.com/api/appdetails/?appids='+applicationid);
-   request.on('response', (response) => {
-     response.on('data', (chunk) => {
-       var jsonResult;
-       try {
-          jsonResult = JSON.parse(chunk);
-       } catch(err) {
-         console.log("Failed to Parse JSON Content of Game: "+err);
-       }
-      console.log("Attempting Save: " +jsonResult[applicationid].data.name);
-
-      var tempName = jsonResult[applicationid].data.name;
-      var tempDescription = jsonResult[applicationid].data.short_description;
-      var tempImage = jsonResult[applicationid].data.header_image;
-
-
-      settings.setSync(applicationid, {
-        details: {
-          name: tempName,
-          appid: applicationid,
-          provider: "Steam",
-          description: tempDescription,
-          img: tempImage
-        }
+function gameLaunchManager(appid) {
+  console.log(appid);
+  //this can be used to track recently played games.
+  if (settings.hasSync('recently_played')) {
+    //ensure it exists.
+    let gameList = (settings.getSync('recently_played.list')).split(",");
+    if (gameList.length == 1) {
+      console.log("Recently Played has no recents, first time add");
+      settings.setSync('recently_played', {
+        list: appid+","
       });
-      console.log("Settings Saved ");
-
-    });
-  });
-  request.on('error', (response) => {
-    console.log("Error: " + response);
-    //return false;
-  });
-  request.end();
-  console.log("true");
-
-  //location.reload();
-  //return true;
-}
-
-function OLDepic_gamesApi(applicationidArray) {
-  return new Promise(function(resolve, reject) {
-    //add method to check if all games have been saved.
-    var gameSavedCheck = new Array();
-    var amountOfGames = applicationidArray.length;
-    //first we need to get the fingerprinting database
-    fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
-      if (err) {
-        console.log("Error occured reading database: "+err);
-        reject();
-      }
-      let FingerPrintDB = JSON.parse(data);
-      for (let i=0; i < applicationidArray.length; i++) {
-        for (y in FingerPrintDB.games) {
-          if (applicationidArray[i] == FingerPrintDB.games[y].unique_id) {
-            console.log("Attempting Save: "+FingerPrintDB.games[y].name);
-            var tempLaunchLink = "";
-            if (FingerPrintDB.games[y].launch.method != "URI") {
-              //if command line or something else that can be here
-            } else {
-              tempLaunchLink = FingerPrintDB.games[y].launch.cmd;
-            }
-            try {
-              settings.setSync(applicationidArray[i], {
-                details: {
-                  name: FingerPrintDB.games[y].name,
-                  appid: applicationidArray[i],
-                  provider: "Epic Games",
-                  description: FingerPrintDB.games[y].meta_data.description,
-                  img: FingerPrintDB.games[y].meta_data.img,
-                  launch: tempLaunchLink
-                }
-              });
-              //after successful save add to savedcheck Array
-              gameSavedCheck.push('true');
-              if (amountOfGames == gameSavedCheck.length) {
-                if (settings.hasSync('EpicGamesAppId')) {
-                  console.log("EpicGamesAppId already exists, adding...");
-                  var previousEpicGamesAppId = settings.getSync('EpicGamesAppId.list');
-                  settings.setSync('EpicGamesAppId', {
-                    list: previousEpicGamesAppId + "," + applicationidArray
-                  });
-                } else {
-                  console.log("EpicGamesAppId doesn't exists, creating...");
-                  settings.setSync('EpicGamesAppId', {
-                    list: applicationidArray+""
-                  });
-                }
-                console.log("Done Saving data for all games.");
-                resolve('true');
-              }
-            }
-            catch(err) {
-              console.log("Couldn't save settings: "+err);
-              reject();
-            }
-          } else {
-            //this would happen if the game found isn't supported yet by the fingerprint database.
-            //so simply this will be printed, and taken from the total games to be saved
-            //amountOfGames = amountOfGames-1;
-            console.log("Unsupported Game found: "+applicationidArray[i]);
-            console.log("Amount of Games to Add now: "+amountOfGames);
-            console.log("Saved so far: "+gameSavedCheck.length);
-
-            //it seems if the supported games are out of order, could lead to an instance where this never resolves,
-            //never saving the list so that it can be properly viewed, and confirmed that all games are saved.
-
-            //TODO:
-            //because this grabs on found title and checks it against a match to every title in the db
-            //when one of the db titles ins't the same as scanned it removes 1 from amountOfGames, even though
-            //this just means that single instance of the db didn't match, not that none match. Removing the subtraction for now
-          }
-        }
-      }
-    });
-  });
+    } else if (gameList.length <= 5 && gameList.length != 1) {
+      //if its smaller than 5 or the default value.
+      console.log("Recenlty Played is under 5, adding");
+      settings.setSync('recently_played', {
+        list: gameList+appid+","
+      });
+      //if shorter then add the currently launched game.
+    } else {
+      console.log("Recently Played reached its limit, staying at limit");
+      //if longer or equal, remove the oldest item,
+      let post_removed_item = gameList.splice(0, 1);  //remove the first or earlist item
+      settings.setSync('recently_played', {
+        list: gameList+appid+","
+      });
+      //then just save this value as the first.
+    }
+  } else {
+    console.log("Recently Played list doesn't exist.");
+    gameNotifManager("err", "Recently Played list doesn't exist.");
+  }
 }
 
 function removeEpicGamesData(areYouSure) {
