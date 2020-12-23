@@ -1,7 +1,7 @@
 {
-  "name": "GameManager",
+  "name": "Gaming_Gaggle",
   "version": "0.1.0",
-  "description": "A simple Game Manager for Babe",
+  "description": "Put all your Games in one place.",
   "main": "main.js",
   "scripts": {
     "start": "electron ."

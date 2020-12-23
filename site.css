@@ -216,6 +216,7 @@ dd * {
 
 #settings-main-page {
   margin-left: 10%;
+  margin-right: 10%;
   margin-top: 5%;
   background-color: #383838;
 
@@ -225,6 +226,14 @@ dd * {
   background-color: #383838;
 }
 
+#settings-main-page p {
+  background-color: #383838;
+}
+
 #settings-main-page h4 {
+  background-color: #383838;
+}
+
+#settings-main-page span {
   background-color: #383838;
 }

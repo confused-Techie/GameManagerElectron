@@ -7,6 +7,7 @@ const fetch = require('node-fetch');
 const keytar = require('keytar');
 const fs = require('fs');
 const shell = require('node-powershell');
+var appVersion = require('electron').remote.app.getVersion();
 
 //this is for handling all search features
 var searchInputElement = document.getElementById("searchTextField");
@@ -42,8 +43,10 @@ function startFunction() {
     console.log("Unable to Initialize Database for Full Scan.");
     gameNotifManager("err", "Unable to Initialize Database for Full Scan");
   }
+
   //this is for loading the searchList
   searchList();
+  setTimeout(dbUpdateCheck, 1000);  //this wait is needed to let the fs function complete.
   //gameUpdateCheck();
   // While this could be called right away, in testing it added nearly 70~100ms to
   //first load the page. Will have it run in the background, after load
@@ -85,6 +88,31 @@ function initSettings() {
     });
   }
 
+  if (!settings.hasSync('db_version')) {
+    settings.setSync('db_version', {
+      version: ""
+    });
+  }
+
+}
+
+function dbUpdateCheck() {
+  //this is for checking and hopefully updating the database
+
+  if (settings.hasSync('db_version')) {
+    if (settings.getSync('db_version.version') != FingerPrintDBTEST.version) {
+      let tempVer = FingerPrintDBTEST.verison;
+      settings.setSync('db_version', {
+        version: FingerPrintDBTEST.version+""
+      });
+      console.log("Assigned DB: "+settings.getSync('db_version.version'));
+    } else {
+      console.log("Database Version has not changed.");
+    }
+  } else {
+    console.log("Database Settings not found");
+    gameNotifManager("err", "Database Settings not found");
+  }
 }
 
 function searchList() {
@@ -114,8 +142,12 @@ function settingsVis() {
   var settingsToInsert = "";
   const librariesToInsert = [];
   document.getElementById('settings-main-page').innerHTML = ""; //clear any data there currntly
+
+  //application information
+  settingsToInsert += "<span style='float:right;display:block;'><p style='text-align: center; margin-left:15%;'>Application Version: "+appVersion+"</p></span>";
+  settingsToInsert += "<span style='float:right;display:block;'><p style='text-align: center; margin-left:15%;'>Database Version: "+settings.getSync('db_version.version')+"</p></span>";
   if (settings.hasSync('game_list') && settings.getSync('game_list.list') != "") {
-    settingsToInsert += "<h4>Libraries</h4>";
+    settingsToInsert += "<span style='float: left;'><h4>Libraries</h4>";
     let gameIDs = (settings.getSync('game_list.list')).split(",");
     for (let i = 0; i < gameIDs.length; i++) {
       game_item = settings.getSync(gameIDs[i]);
@@ -124,8 +156,11 @@ function settingsVis() {
         settingsToInsert += "<input type='checkbox' class='form-check-input' id='"+game_item.details.library+"' style='margin-left:10px;'><label class='form-check-label' for='"+game_item.details.library+"' style='margin-left:30px;'>"+game_item.details.library+"</label><br/>";
       }
     }
-    settingsToInsert += "<button type='submit' class='btn btn-primary' onclick='deleteFolderCheck("+JSON.stringify(librariesToInsert)+")'>Delete</button>";
+    settingsToInsert += "<button type='submit' class='btn btn-primary' onclick='deleteFolderCheck("+JSON.stringify(librariesToInsert)+")'>Delete</button></span>";
   }
+
+  //background settings.
+
   document.getElementById('settings-main-page').innerHTML += settingsToInsert;
   document.getElementById('settings-page').style.display = "block";
 }
@@ -230,7 +265,7 @@ function gameLibraryVis() {
     displayData += "<div class='card-footer text-muted'>";
     displayData += "</div></div></div></div>";
   }
-
+  
   document.getElementById('game-container').innerHTML += displayData;
 }
 
@@ -293,13 +328,14 @@ function sidebarVis() {
 
   //time for recently played games.
   if (settings.hasSync('recently_played') && settings.getSync('recently_played.list') != "") {
-    sidebarDataToInsert += "<div class='sidebar-item'><div><dl><dt>Recently Played</dt><hr>";
+    sidebarDataToInsert += "<div class='sidebar-item'><div ><dl><dt>Recently Played</dt><hr>";
     let gameList = (settings.getSync('recently_played.list')).split(",");
     for (let i = 0; i < gameList.length-1; i++) {
       try {
         if (typeof gameList[i] != 'undefined' || gameList[i] != "" || typeof gameList[i] != 'null') {
           let game_item = settings.getSync(gameList[i]);
-          sidebarDataToInsert += "<a href='#"+game_item.details.appid+"'><dd>"+game_item.details.name+"</dd></a>";
+          //sidebarDataToInsert += "<a href='#' onclick='document.getElementById('"+game_item.details.appid+"').scrollIntoView()'><dd>"+game_item.details.name+"</dd></a><hr style='border-top: 1px dotted black;background-color: black;'>";
+          sidebarDataToInsert += `<dd style='cursor:pointer;' onclick='document.getElementById("${game_item.details.name}").scrollIntoView();'>${game_item.details.name}</dd><hr style='border-top: 1px dotted black; background-color: black;'>`;
         }
       } catch(err) {
         console.log("Error: Unable to retreive Game Settings: "+err+" Of "+gameList[i]);
@@ -1184,6 +1220,11 @@ function gameNotifManager(type, content) {
     document.getElementById('alert-overlay').style.color = "black";
     document.getElementById('alert-overlay').innerText = "Couldn't find "+content+". Removing it from your library.";
     document.getElementById('alert-overlay').style.display = "block";
+  } else if (type == "reset") {
+    document.getElementById('alert-overlay').style.backgroundColor = "#3838383";
+    document.getElementById('alert-overlay').style.color = "white";
+    document.getElementById('alert-overlay').innerText = "Reset Complete. Please Restart the Program.";
+    document.getElementById('alert-overlay').style.display = "block";
   }
 }
 
@@ -1241,5 +1282,31 @@ function removeEpicGamesData(areYouSure) {
     } catch(err) {
       console.log("Unable to Find Library File. You may need to delete data manually. Error: "+err);
     }
+  }
+}
+
+function resetSettings() {
+  console.log("Reset settings...");
+  try {
+    settings.unset('last_game_scan');
+    settings.unset('recently_played');
+    settings.unset('last_game_search');
+    settings.unset('db_version');
+    settings.unset('discordLink');
+    gameNotifManager("reset", "");
+  } catch(err) {
+    console.log("An Error occured while Resetting Settings: "+err);
+    gameNotifManager("err", "An Error occured while Resetting Settings: "+err);
+  }
+}
+
+function factoryReset() {
+  console.log("Full Factory Reset...");
+  try {
+    settings.unset();
+    gameNotifManager("reset", "");
+  } catch(err) {
+    console.log("An Error occured while Factory Resetting: "+err);
+    gameNotifManager("err", "An Error occured while Factory Resetting: "+err);
   }
 }
