@@ -19,7 +19,7 @@ function (event) {
   }
 });
 
-var FingerPrintDBTEST = "";
+var FingerPrintDBInit = "";
 
 
 //This is the startup function, loading needed elements
@@ -28,14 +28,14 @@ function startFunction() {
   sidebarVis();
   gameLibraryVis();
   try {
-    if (FingerPrintDBTEST == "") {
+    if (FingerPrintDBInit == "") {
       fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
         if (err) {
           console.log("Error occured reading Database: "+err);
           gameNotifManager("err", "Error occured reading Database: "+err);
         }
-        FingerPrintDBTEST = JSON.parse(data);
-        console.log("Successfully created Var FingerPrintDBTEST");
+        FingerPrintDBInit = JSON.parse(data);
+        console.log("Successfully created Var FingerPrintDBInit");
       });
     }
   } catch(err) {
@@ -99,10 +99,10 @@ function dbUpdateCheck() {
   //this is for checking and hopefully updating the database
 
   if (settings.hasSync('db_version')) {
-    if (settings.getSync('db_version.version') != FingerPrintDBTEST.version) {
-      let tempVer = FingerPrintDBTEST.verison;
+    if (settings.getSync('db_version.version') != FingerPrintDBInit.version) {
+      let tempVer = FingerPrintDBInit.verison;
       settings.setSync('db_version', {
-        version: FingerPrintDBTEST.version+""
+        version: FingerPrintDBInit.version+""
       });
       console.log("Assigned DB: "+settings.getSync('db_version.version'));
     } else {
@@ -908,11 +908,11 @@ function MatchCheckV2(fileToScan, workingDir, chosenLibrary) {
   //full DB check
   else {
     try {
-        for (y in FingerPrintDBTEST.games) {
-          if (FingerPrintDBTEST.games[y].search_method != "epic_games") {
-            if (fileToScan.includes(FingerPrintDBTEST.games[y].detect.file) && workingDir.includes(FingerPrintDBTEST.games[y].detect.dir)) {
-              console.log(FingerPrintDBTEST.games[y].name+" Found in Full Check");
-              otherApiV1(FingerPrintDBTEST.games[y].unique_id, workingDir, chosenLibrary)
+        for (y in FingerPrintDBInit.games) {
+          if (FingerPrintDBInit.games[y].search_method != "epic_games") {
+            if (fileToScan.includes(FingerPrintDBInit.games[y].detect.file) && workingDir.includes(FingerPrintDBInit.games[y].detect.dir)) {
+              console.log(FingerPrintDBInit.games[y].name+" Found in Full Check");
+              otherApiV1(FingerPrintDBInit.games[y].unique_id, workingDir, chosenLibrary)
               .then(res => {
                 console.log(res);
               })

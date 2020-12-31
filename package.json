@@ -1,5 +1,6 @@
 {
   "name": "GamingGaggle",
+  "packageName": "Gaming Gaggle",
   "version": "0.1.0",
   "description": "Put all your Games in one place.",
   "main": "main.js",
@@ -10,7 +11,8 @@
   "author": "LHBasics",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^11.0.2"
+    "electron": "^11.0.2",
+    "electron-winstaller": "^4.0.1"
   },
   "dependencies": {
     "electron-settings": "^4.0.2",

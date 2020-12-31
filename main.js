@@ -15,7 +15,8 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true
-    }
+    },
+    icon: './Resources/SquareLogoCustom.png'
   })
 
   win.loadFile('index.html')

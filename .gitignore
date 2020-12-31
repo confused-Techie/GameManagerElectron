@@ -2,3 +2,5 @@ node_modules
 data/SECRETS.js
 data/cache/*
 !data/cache/.gitkeep
+
+out/
