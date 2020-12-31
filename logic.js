@@ -1,10 +1,9 @@
 //var addLibrary = document.getElementById("addLibrary");
 const { dialog } = require('electron').remote
-const { net } = require('electron').remote
 const { BrowserWindow } = require('electron').remote
 const settings = require('electron-settings');
 const fetch = require('node-fetch');
-const keytar = require('keytar');
+const keytar = require('keytar'); //used in discord auth, keeping for future updates
 const fs = require('fs');
 const shell = require('node-powershell');
 var appVersion = require('electron').remote.app.getVersion();
@@ -265,7 +264,7 @@ function gameLibraryVis() {
     displayData += "<div class='card-footer text-muted'>";
     displayData += "</div></div></div></div>";
   }
-  
+
   document.getElementById('game-container').innerHTML += displayData;
 }
 
