@@ -5,21 +5,29 @@
   "description": "Put all your Games in one place.",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "postinstall": "install-app-deps",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "keywords": [],
   "author": "Locally Hosted Basics",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^11.0.2"
+    "electron": "^11.0.2",
+    "electron-builder": "^22.9.1"
   },
   "build": {
     "productName": "Gaming Gaggle",
     "win": {
       "target": [
-        "nsis",
-        "msi"
-      ]
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "createDesktopShortcut": "always",
+      "allowToChangeInstallationDirectory"
     },
     "directories": {
       "buildResources": "resources",

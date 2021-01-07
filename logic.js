@@ -42,7 +42,7 @@ function startFunction() {
   dbHealthCheck();
   //this is for loading the searchList
   searchList();
-  //setTimeout(dbUpdateCheck, 1000);  //this wait is needed to let the fs function complete.
+  setTimeout(dbUpdateCheck, 1000);  //this wait is needed to let the fs function complete.
   //gameUpdateCheck();
   // While this could be called right away, in testing it added nearly 70~100ms to
   //first load the page. Will have it run in the background, after load
@@ -171,14 +171,27 @@ function dbUpdateCheck() {
   //this is for checking and hopefully updating the database
 
   if (settings.hasSync('db_version')) {
-    if (settings.getSync('db_version.version') != FingerPrintDBInit.version) {
-      let tempVer = FingerPrintDBInit.verison;
+    //assign version if empty
+    if (settings.getSync('db_version.version') == "") {
       settings.setSync('db_version', {
         version: FingerPrintDBInit.version+""
       });
-      console.log("Assigned DB: "+settings.getSync('db_version.version'));
+      console.log("Database Version: "+settings.getSync('db_version.version'));
     } else {
-      console.log("Database Version has not changed.");
+      //if already a valid version, see if newest
+      fetch("https://raw.githubusercontent.com/confused-Techie/Gaming-Gaggle/main/data/fingerprinting_db.json")
+      .then(res => res.json())
+      .then(body => {
+        if (settings.getSync('db_version.version') != body.version) {
+          //if the online version is not the same as the local version then replace
+          dbUpdate()
+          .then( res => {
+            dbHealthCheck();
+            //once updated run Helth Check to ensure the initialized DB is the newest download
+            console.log("Database Version: "+settings.getSync('db_version.version'));
+          });
+        }
+      });
     }
   } else {
     console.log("Database Settings not found");
