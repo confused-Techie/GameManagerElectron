@@ -66,14 +66,14 @@ function createWindow() {
           label: 'GitHub',
           click: async () => {
             const { shell } = require('electron')
-            await shell.openExternal('https://electronjs.org')
+            await shell.openExternal('https://github.com/confused-Techie/Gaming-Gaggle')
           }
         },
         {
           label: 'Documentation',
           click: async () => {
             const { shell } = require('electron')
-            await shell.openExternal('https://electronjs.org')
+            await shell.openExternal('https://github.com/confused-Techie/Gaming-Gaggle/wiki')
           }
         },
         {
@@ -87,7 +87,7 @@ function createWindow() {
             { label: 'About Reset Settings',
               click: async () => {
                 const { shell } = require('electron')
-                await shell.openExternal('https://electronjs.org')
+                await shell.openExternal('https://github.com/confused-Techie/Gaming-Gaggle#reset-settings')
               }
             },
             { label: 'Factory Reset',

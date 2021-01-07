@@ -1,7 +1,7 @@
 {
   "name": "GamingGaggle",
   "packageName": "Gaming Gaggle",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Put all your Games in one place.",
   "main": "main.js",
   "scripts": {
@@ -12,7 +12,16 @@
   },
   "keywords": [],
   "author": "Locally Hosted Basics",
-  "license": "ISC",
+  "license": "GPL-3.0",
+  "bugs": {
+    "email": "dev@lhbasics.com"
+  },
+  "homepage": "https://github.com/confused-Techie/Gaming-Gaggle/blob/main/README.md",
+  "files": [
+    "!/data/SECRETS.js",
+    "!/data/fingerprinting_db.json",
+    "!/resources/github/*"
+  ],
   "devDependencies": {
     "electron": "^11.0.2",
     "electron-builder": "^22.9.1"
@@ -27,7 +36,9 @@
     },
     "nsis": {
       "createDesktopShortcut": "always",
-      "allowToChangeInstallationDirectory"
+      "allowToChangeInstallationDirectory": "true",
+      "oneClick": "false",
+      "license": "license.txt"
     },
     "directories": {
       "buildResources": "resources",

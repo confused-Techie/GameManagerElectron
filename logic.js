@@ -6,6 +6,7 @@ const fetch = require('node-fetch');
 const keytar = require('keytar'); //used in discord auth, keeping for future updates
 const fs = require('fs');
 const shell = require('node-powershell');
+var elShell = require('electron').shell;
 var appVersion = require('electron').remote.app.getVersion();
 const electron = require('electron');
 const appData = (electron.app || electron.remote.app).getPath('userData');
@@ -21,6 +22,14 @@ function (event) {
   if (event.keyCode === 13) {
     event.preventDefault();
     search();
+  }
+});
+
+//open links externally by default
+document.addEventListener('click', function (event) {
+  if (event.target.tagName === 'A' && event.target.href.startsWith('http')) {
+    event.preventDefault()
+    elShell.openExternal(event.target.href)
   }
 });
 
@@ -345,7 +354,7 @@ function gameLibraryVis() {
     console.log("No Saved games");
     displayData += "<div class='grid-item' id='no-data'><div class='card'><div class='card-body'><div class='card-title'>";
     displayData += "Looks like you haven't added any Games yet";
-    displayData += "</div><p class='card-text'>To add some games just click the folder icon on the left! Or read more about it here. Also it's recommended to add you C Drive First</p>";
+    displayData += "</div><p class='card-text'>To add some games just click the folder icon on the left! Or read more about it <a href='https://github.com/confused-Techie/Gaming-Gaggle/wiki/Adding-Your-Games-to-Gaming-Gaggle'>here</a>. Also it's recommended to add you C Drive First</p>";
     displayData += "<div class='card-footer text-muted'>";
     displayData += "</div></div></div></div>";
   }
