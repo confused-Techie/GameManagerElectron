@@ -20,6 +20,12 @@ With Gaming Gaggle simply adding different storage devices allows your games to 
 
 ## Installation
 
+### Download and Install
+
+You can download the installer directly below or click on the relases to the right to discover past releases and see the features of each one.
+
+<a href="https://github.com/confused-Techie/Gaming-Gaggle/releases/download/v1.0.0.0/Gaming.Gaggle.Setup.1.0.0.exe">Gaming Gaggle v1.0.0</a>
+
 ### Build From Source
 
 By downloading the GitHub Source Code here or by cloning the repo locally, you can package the app using Electron-Packager or something similar or even run using
@@ -28,10 +34,6 @@ By downloading the GitHub Source Code here or by cloning the repo locally, you c
 npm start
 ```
 Within the repo directory.
-
-### Microsoft Store
-
-Gaming Gaggle is soon to be published on the Microsoft Store!
 
 ## Supported Games
 
