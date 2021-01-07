@@ -8,11 +8,23 @@
     "start": "electron ."
   },
   "keywords": [],
-  "author": "LHBasics",
+  "author": "Locally Hosted Basics",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^11.0.2",
-    "electron-winstaller": "^4.0.1"
+    "electron": "^11.0.2"
+  },
+  "build": {
+    "productName": "Gaming Gaggle",
+    "win": {
+      "target": [
+        "nsis",
+        "msi"
+      ]
+    },
+    "directories": {
+      "buildResources": "resources",
+      "output": "release"
+    }
   },
   "dependencies": {
     "electron-settings": "^4.0.2",

@@ -16,7 +16,7 @@ function createWindow() {
       nodeIntegration: true,
       enableRemoteModule: true
     },
-    icon: './Resources/SquareLogoCustom.png'
+    icon: './resources/SquareLogoCustom.png'
   })
 
   win.loadFile('index.html')

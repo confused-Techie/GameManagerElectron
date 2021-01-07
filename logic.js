@@ -7,6 +7,11 @@ const keytar = require('keytar'); //used in discord auth, keeping for future upd
 const fs = require('fs');
 const shell = require('node-powershell');
 var appVersion = require('electron').remote.app.getVersion();
+const electron = require('electron');
+const appData = (electron.app || electron.remote.app).getPath('userData');
+
+var development = false;
+var dbLoc;
 
 //this is for handling all search features
 var searchInputElement = document.getElementById("searchTextField");
@@ -27,25 +32,17 @@ function startFunction() {
   initSettings();
   sidebarVis();
   gameLibraryVis();
-  try {
-    if (FingerPrintDBInit == "") {
-      fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
-        if (err) {
-          console.log("Error occured reading Database: "+err);
-          gameNotifManager("err", "Error occured reading Database: "+err);
-        }
-        FingerPrintDBInit = JSON.parse(data);
-        console.log("Successfully created Var FingerPrintDBInit");
-      });
-    }
-  } catch(err) {
-    console.log("Unable to Initialize Database for Full Scan.");
-    gameNotifManager("err", "Unable to Initialize Database for Full Scan");
+
+  if (development) {
+    dbLoc = "./data/fingerprinting_db.json";
+  } else {
+    dbLoc = appData+"/fingerprinting_db.json";
   }
 
+  dbHealthCheck();
   //this is for loading the searchList
   searchList();
-  setTimeout(dbUpdateCheck, 1000);  //this wait is needed to let the fs function complete.
+  //setTimeout(dbUpdateCheck, 1000);  //this wait is needed to let the fs function complete.
   //gameUpdateCheck();
   // While this could be called right away, in testing it added nearly 70~100ms to
   //first load the page. Will have it run in the background, after load
@@ -93,6 +90,81 @@ function initSettings() {
     });
   }
 
+}
+
+function dbHealthCheck() {
+  //this should check if the database exists, and if its up to Date
+  try {
+    if (FingerPrintDBInit == "") {
+      //db has not been initialized.
+      if (!fs.existsSync(appData+"/fingerprinting_db.json")) {
+        //if the db doesn't exist within the %AppData%
+        console.log("Database doesn't exist locally. Downloading...");
+        try {
+          dbUpdate()
+          .then(res => {
+            try {
+              fs.readFile(appData+"/fingerprinting_db.json", 'utf8', function(err, data) {
+                if (err) {
+                  console.log("Error occured Reading newly downloaded Database: "+err);
+                  gameNotifManager("err", "Error Reading Database: "+err);
+                }
+                FingerPrintDBInit = JSON.parse(data);
+                dbLoc = appData+"/fingerprinting_db.json";
+                console.log("Successfully created Var FingerPrintDBInit");
+              });
+            } catch(err) {
+              console.log("Unknown Error Reading New Database: "+err);
+              gameNotifManager("err", "Unknown Error Reading New Database: "+err);
+            }
+          })
+          .catch(err => {
+            console.log("Error while downloading DB: "+err);
+          });
+        } catch(err) {
+          console.log("Unable to download Database");
+        }
+      } else {
+        //if the db DOES exist in %AppData%
+        try {
+          fs.readFile(appData+"/fingerprinting_db.json", 'utf8', function(err, data) {
+            if (err) {
+              console.log("Error occured Reading newly downloaded Database: "+err);
+              gameNotifManager("err", "Error Reading Database: "+err);
+            }
+            FingerPrintDBInit = JSON.parse(data);
+            dbLoc = appData+"/fingerprinting_db.json";
+            console.log("Successfully created Var FingerPrintDBInit");
+          });
+        } catch(err) {
+          console.log("Unable to read Database: "+err);
+          gameNotifManager("err", "Unable to read Database: "+err);
+        }
+      }
+    }
+  } catch(err) {
+    console.log("Unable to Initialize DB: "+err);
+    gameNotifManager("err", "Unable to Initialize DB: "+err);
+  }
+}
+
+function dbUpdate() {
+  return new Promise(function(resolve, reject) {
+    fetch("https://raw.githubusercontent.com/confused-Techie/Gaming-Gaggle/main/data/fingerprinting_db.json")
+    .then(res => res.text())
+    .then(body => {
+      //now to write the file
+      fs.writeFile(appData+'/fingerprinting_db.json', body, function(err) {
+        if (err) {
+          console.log("Error Writing Database: "+err);
+          gameNotifManager("err", "Error Writing Database: "+err);
+          reject("Error Writing Database: "+err);
+        }
+        console.log("Successfully wrote Database: "+appData+"/fingerprinting_db.json");
+        resolve("Success");
+      });
+    });
+  });
 }
 
 function dbUpdateCheck() {
@@ -1000,7 +1072,7 @@ function epicApiV2(applicationID, loc, chosenLibrary) {
   return new Promise(function(resolve, reject) {
     //first to retreive the fingerprintDB
     try {
-      fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
+      fs.readFile(dbLoc, 'utf8', function(err, data) {
         if (err) {
           gameNotifManager("err", "Error occured reading Database: "+err);
           reject("Error occured reading Database: "+err);
@@ -1065,7 +1137,7 @@ function otherApiV1(applicationID, loc, chosenLibrary) {
   console.log("Other API V1 accessed");
   return new Promise(function(resolve, reject) {
     try {
-      fs.readFile("./data/fingerprinting_db.json", 'utf8', function(err, data) {
+      fs.readFile(dbLoc, 'utf8', function(err, data) {
         if (err) {
           gameNotifManager("err", "Error occured reading Database: "+err);
           reject("Error occured reading Database: "+err);
