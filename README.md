@@ -1,4 +1,4 @@
-<img src='https://github.com/confused-Techie/Gaming-Gaggle/blob/main/Resources/LargeTile.scale-400.png' width="20%">
+<img src='https://github.com/confused-Techie/Gaming-Gaggle/blob/main/resources/LargeTile.scale-400.png' width="25%">
 
 # Gaming-Gaggle
 
@@ -38,6 +38,8 @@ Gaming Gaggle is soon to be published on the Microsoft Store!
 Gaming Gaggle should support every single game purchased through Steam right out of the box, as for other applications those require a manual entry into the FingerPrinting Database.
 
 The list of other games supported can be viewed <a href="https://github.com/confused-Techie/Gaming-Gaggle/wiki/Supported-Games">here</a>.
+
+<a href="https://github.com/confused-Techie/Gaming-Gaggle/wiki/Did-Gaming-Gaggle-miss-a-Game%3F">Have a game that doesn't show up?</a>
 
 <img src="https://github.com/confused-Techie/Gaming-Gaggle/blob/main/Resources/github/home.png" width="90%">
 <p align="center"><i>Home Page of Gaming Gaggle</i></p>
