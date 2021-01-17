@@ -32,7 +32,9 @@
       "target": [
         "nsis"
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "certificateFile": "E:/certs/tester.pfx",
+      "certificatePassword": ""
     },
     "nsis": {
       "createDesktopShortcut": "always",
