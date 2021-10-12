@@ -23,7 +23,7 @@
     "!/resources/github/*"
   ],
   "devDependencies": {
-    "electron": "^11.0.2",
+    "electron": "^11.5.0",
     "electron-builder": "^22.9.1"
   },
   "build": {
