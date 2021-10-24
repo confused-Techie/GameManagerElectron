@@ -2,6 +2,8 @@
 
 # Gaming-Gaggle
 
+<h1> This Project is no longer being updated. With large changes in how Electron functions and unpatched security vulnerabilities present I would no longer recommend its use on any platform. Feel free to submit an issue if there is usage of this program requested. </h1>
+
 Gaming Gaggle is aiming to get rid of Multiple Applications Organizing yours games, instead of opening 5 or 6 different programs to find your games they are all within on place, Gaming Gaggle.
 
 With Gaming Gaggle simply adding different storage devices allows your games to be found automatically, letting you see not only all of your games, but descriptions, titles, images, and of course being able to launch them, all in one place.
